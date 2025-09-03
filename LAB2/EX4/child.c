@@ -12,7 +12,8 @@ int main(int argc, char *argv[]) {
 
     srand(time(NULL) ^ getpid()); 
     int seq = 0;
-
+    ptr[1] = seq;
+    
     while(1) {
         sleep(rand() % 2 + 1);   
 
