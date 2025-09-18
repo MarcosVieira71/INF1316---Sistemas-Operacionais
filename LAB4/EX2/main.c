@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <time.h>
 
+int loop = 1;
+
 time_t inicio = 0;
 
 void inicio_ligacao(int sig) {
@@ -29,8 +31,7 @@ void fim_ligacao(int sig) {
 
     printf("Ligação encerrada em %s\n", ctime(&fim));
     printf("Preço: R$ %.2f\n", preco);
-
-    exit(0);
+    loop = 0;    
 }
 
 int main() {
@@ -40,7 +41,7 @@ int main() {
     printf("Monitor de chamadas iniciado (PROCESSO = %d).\n", getpid());
     printf("SIGUSR1 para iniciar ligação | SIGUSR2 para encerrar.\n");
 
-    while (1) {
+    while (loop) {
         pause(); 
     }
 
