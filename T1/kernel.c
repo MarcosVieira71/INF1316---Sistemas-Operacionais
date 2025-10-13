@@ -100,13 +100,13 @@ int openFIFOs(int* fd_irq, int* fd_syscall)
 {
     int irq = open(FIFO_IRQ, O_RDONLY);
     if(irq == -1){
-        perror("Erro ao abrir FIFO_IRQ.");
+        perror("[Kernel] - Erro ao abrir FIFO_IRQ.");
         return -1;
     }
 
     int syscall = open(FIFO_SYSCALL, O_RDONLY);
     if(syscall == -1){
-        perror("Erro ao abrir FIFO_SYSCALL.");
+        perror("[Kernel] - Erro ao abrir FIFO_SYSCALL.");
         return -1;
     }
     *fd_irq = irq;
