@@ -1,4 +1,4 @@
-
+#include <sys/types.h>
 
 int enqueue(pid_t* fila, int* n, pid_t pid) {
     fila[*n] = pid;

@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -6,9 +7,11 @@
 #include <errno.h> 
 #include <fcntl.h>
 
+#include "queue.h"
+
 #define FIFO_IRQ "/tmp/fifo_irq"
 #define FIFO_SYSCALL "/tmp/fifo_syscall"
-#define SIZE 10
+#define NUM_PROC 5
 
 typedef enum {RUNNING, READY, BLOCKED, TERMINATED} State;
 
@@ -19,7 +22,7 @@ typedef struct {
     char blocked_on;
 } Process;
 
-int startProcesses(Process* p, int n)
+void startProcesses(Process* p, int n)
 {
     for(int i = 0; i < n; i++){
         p[i].pid = 0; 
@@ -27,8 +30,44 @@ int startProcesses(Process* p, int n)
         p[i].state = READY;
         p[i].blocked_on = 0;  
     }
-    return 0;
 }
+
+void handleIRQ0(int *current, Process* processes) {
+    if(processes[*current].state == RUNNING) {
+        kill(processes[*current].pid, SIGSTOP);
+        processes[*current].state = READY;
+        printf("[Kernel] - Processo %d interrompido pelo IRQ0.\n", *current+1);
+    }
+
+    int next = (*current + 1) % NUM_PROC;
+    for(int i = 0; i < NUM_PROC; i++) {
+        if(processes[next].state == READY) {
+            kill(processes[next].pid, SIGCONT);
+            processes[next].state = RUNNING;
+            *current = next;
+            printf("[Kernel] - Processo %d agora RUNNING.\n", *current+1);
+            break;
+        }
+        next = (next + 1) % NUM_PROC; 
+    }
+
+}
+
+void handlerReleaseDevice(const char* device, pid_t fila[], int *n, Process processes[5]) {
+    pid_t pid = dequeue(fila, n);  
+    if(pid == -1) return;           
+
+    for(int i = 0; i < 5; i++) {
+        if(processes[i].pid == pid) {
+            processes[i].state = READY;
+            processes[i].blocked_on = 0;
+            printf("[Kernel] - Processo %d desbloqueado do dispositivo %s. Agora está em READY\n", i, device);
+            break;
+        }
+    }
+}
+
+
 
 int makeFIFOs(void){
     if (mkfifo(FIFO_IRQ, S_IRUSR | S_IWUSR) == -1) {
@@ -86,10 +125,10 @@ int main() {
 
 
     Process processes[5];
-    int err = startProcesses(processes, 5);
+    startProcesses(processes, 5);
 
 
-    err = makeFIFOs();
+    int err = makeFIFOs();
     if(err)
     {
         perror("[Kernel] - Erro na criacao das FIFOs. \n");
@@ -107,12 +146,29 @@ int main() {
     }
     
     int current = 0;
-    char buf[SIZE];
+    char buf;
 
     while(1)
     {
+        int n = read(fd_irq, &buf, 1);
+        if(n > 0) {
+            switch(buf) {
+                case '0': // IRQ0
+                    handleIRQ0(&current, processes);
+                    break;
+                case '1': // D1 (IRQ1)
+                    handlerReleaseDevice("D1", fila_D1, &n_D1, processes);
+                    break;
+                case '2': // D2 (IRQ2)
+                    handlerReleaseDevice("D2", fila_D2, &n_D2, processes);
+                    break;
+            }
+        }
+        
+        n = read(fd_syscall, &buf, 1);        
+        if(n > 0) {
 
-
+        }
 
     }
     

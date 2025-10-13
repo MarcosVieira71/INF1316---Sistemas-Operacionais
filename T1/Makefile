@@ -1,7 +1,6 @@
-# Makefile para KernelSim
 
 CC = gcc
-CFLAGS = -Wall -g -std=c99
+CFLAGS = -Wall -g 
 
 APP_EXEC = app
 KERNEL_EXEC = kernel
