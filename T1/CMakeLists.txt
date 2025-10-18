@@ -16,12 +16,12 @@ set(SRC_COMMON
 )
 
 add_executable(app
-    src/app.c
+    src/app/app.c
     ${SRC_COMMON}
 )
 
 add_executable(intercontroller
-    src/intercontroller.c
+    src/intercontroller/intercontroller.c
     ${SRC_COMMON}
 )
 

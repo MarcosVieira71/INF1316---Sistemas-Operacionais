@@ -7,7 +7,8 @@
 int timeSlice(int *current, Process* processes, int num_proc) {
     if(processes[*current].state == RUNNING) {
         kill(processes[*current].pid, SIGSTOP);
-        processes[*current].state = READY;
+        if(processes[*current].state != TERMINATED)
+            processes[*current].state = READY;
     }
 
     int next = (*current + 1) % num_proc;
@@ -53,7 +54,7 @@ void handleSyscallMessage(pid_t pid, char dev, char op,
 
 
 int handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
-                  pid_t queue_D1[], int n_D1, pid_t queue_D2[], int n_D2 )
+                  pid_t queue_D1[], int* n_D1, pid_t queue_D2[], int* n_D2 )
 {
     switch(buf) {
         case '0': {
@@ -63,17 +64,43 @@ int handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
             break;
         }
         case '1': {
-            int idx = releaseDevice(queue_D1, &n_D1, processes, num_proc);
+            int idx = releaseDevice(queue_D1, n_D1, processes, num_proc);
             if(idx >= 0)
                 printf("[Kernel] - Processo %d desbloqueado do dispositivo D1\n", idx + 1);
             break;
         }
         case '2': {
-            int idx = releaseDevice(queue_D2, &n_D2, processes, num_proc);
+            int idx = releaseDevice(queue_D2, n_D2, processes, num_proc);
             if(idx >= 0)
                 printf("[Kernel] - Processo %d desbloqueado do dispositivo D2\n", idx + 1);
             break;
         }
     }
     return 0;
+}
+
+void printProcessStates(Process* processes, int num_proc) 
+{
+    printf("=== Estados dos Processos ===\n");
+    for(int i = 0; i < num_proc; i++) {
+        printf("Processo %d (PID=%d): PC=%d, Estado=%s",
+               i+1, processes[i].pid, processes[i].PC,
+               (processes[i].state == RUNNING) ? "RUNNING" :
+               (processes[i].state == READY) ? "READY" :
+               (processes[i].state == BLOCKED) ? "BLOCKED" :
+               "TERMINATED");
+        if(processes[i].state == BLOCKED)
+            printf(", Bloqueado em D%c", processes[i].blocked_on);
+        printf("\n");
+    }
+    printf("============================\n");
+}
+
+int allProcessesTerminated(Process* processes, int num_proc) 
+{
+    for(int i = 0; i < num_proc; i++) {
+        if(processes[i].state != TERMINATED)
+            return 0;
+    }
+    return 1; 
 }

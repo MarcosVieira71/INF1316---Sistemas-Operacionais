@@ -13,12 +13,12 @@ void handleSyscallMessage(pid_t pid, char dev, char op,
                           pid_t queue_D1[], int *n_D1,
                           pid_t queue_D2[], int *n_D2);
 
-void handleSyscallFifo(int fd_syscall, Process* processes,
-                       pid_t queue_D1[], int *n_D1,
-                       pid_t queue_D2[], int *n_D2,
-                       int num_proc);
-
 int handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
-                  pid_t queue_D1[], int n_D1, pid_t queue_D2[], int n_D2);
+                  pid_t queue_D1[], int* n_D1, 
+                  pid_t queue_D2[], int* n_D2);
+
+void printProcessStates(Process* processes, int num_proc);
+
+int allProcessesTerminated(Process* processes, int num_proc);
 
 #endif
