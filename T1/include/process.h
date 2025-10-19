@@ -12,6 +12,7 @@ typedef struct {
     char blocked_on;
     int d1_accesses;
     int d2_accesses;
+    char op;
 } Process;
 
 void startProcesses(Process* p, int n);

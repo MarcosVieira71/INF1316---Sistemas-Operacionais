@@ -36,6 +36,7 @@ int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc) {
 
     processes[idx].state = READY;
     processes[idx].blocked_on = 0;
+    processes[idx].op = 0;
     return idx;
 }
 
@@ -60,6 +61,8 @@ void handleSyscallMessage(pid_t pid, char dev, char op,
         enqueue(queue_D2, n_D2, pid);
         processes[idx].d2_accesses++;
     } 
+
+    processes[idx].op = op;
 }
 
 
@@ -104,7 +107,7 @@ void printProcessStates(Process* processes, int num_proc)
                (processes[i].state == BLOCKED) ? "BLOCKED" :
                "TERMINATED");
         if(processes[i].state == BLOCKED)
-            printf(", Bloqueado em D%c", processes[i].blocked_on);
+            printf(", Bloqueado em D%c na operação %c", processes[i].blocked_on, processes[i].op);
         printf(", D1: %d, D2: %d", processes[i].d1_accesses, processes[i].d2_accesses);
         printf("\n");
     }
