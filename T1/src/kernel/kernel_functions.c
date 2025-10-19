@@ -66,7 +66,7 @@ void handleSyscallMessage(pid_t pid, char dev, char op,
 }
 
 
-int handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
+void handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
                   pid_t queue_D1[], int* n_D1, pid_t queue_D2[], int* n_D2 )
 {
     switch(buf) {
@@ -93,7 +93,6 @@ int handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
             break;
         }
     }
-    return 0;
 }
 
 void printProcessStates(Process* processes, int num_proc) 
