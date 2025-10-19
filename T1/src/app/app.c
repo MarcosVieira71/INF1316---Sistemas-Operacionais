@@ -9,13 +9,12 @@
 #include <sys/stat.h>
 #include <signal.h>
 
-#define FIFO_SYSCALL "/tmp/fifo_syscall"
 #define MAX 5
 
 int main(int argc, char *argv[]) {
-    signal(SIGINT, SIG_IGN); 
 
     int fd;
+
     srand(getpid() ^ time(NULL));
 
     if(openFIFO(&fd, FIFO_SYSCALL, O_WRONLY) == -1) {
@@ -23,7 +22,8 @@ int main(int argc, char *argv[]) {
     }
 
     int PC = 0;
-    printf("[App %d] - Iniciado (PID=%d)\n", getpid(), getpid());
+    int pid = getpid();
+    printf("[App %d] - Iniciado (PID=%d)\n", pid, pid); 
     fflush(stdout);
 
     while (PC < MAX) {
@@ -34,11 +34,12 @@ int main(int argc, char *argv[]) {
         char op = '-';
         char state[16] = "RUNNING";
 
+        // 15% chance de syscall
         int r = rand() % 100;
-        if (r < 15) {  // 15% chance de syscall
+        if (r < 15) {  
             dev = (rand() % 2) ? '1' : '2';
             op = "RWX"[rand() % 3];
-            printf("[App %d] -> syscall(D%c, %c)\n", getpid(), dev, op);
+            printf("[App %d] -> syscall(D%c, %c)\n", pid, dev, op);
         }
 
         if(PC >= MAX) {
@@ -46,14 +47,14 @@ int main(int argc, char *argv[]) {
         }
 
         char msg[64];
-        sprintf(msg, "%d %c %c %d %s", getpid(), dev, op, PC, state);
+        sprintf(msg, "%d %c %c %d %s\n", pid, dev, op, PC, state);
         write(fd, msg, strlen(msg));
 
-        printf("[App %d] - PC=%d executando...\n", getpid(), PC);
+        printf("[App %d] - PC=%d executando...\n", pid, PC);
         fflush(stdout);
     }
 
-    printf("[App %d] - Finalizado (PC=%d)\n", getpid(), PC);
     close(fd);
+    printf("[App %d] - Finalizado (PC=%d)\n", pid, PC);
     return 0;
 }
