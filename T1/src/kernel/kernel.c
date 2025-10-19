@@ -30,6 +30,8 @@ int main() {
     Process processes[NUM_PROC];
     pid_t intercontroller;
 
+
+    //Filas para processos esperando nos dispositivos D1 e D2
     pid_t queue_D1[NUM_PROC];
     int n_D1 = 0;
     pid_t queue_D2[NUM_PROC];
@@ -59,6 +61,8 @@ int main() {
         exit(1);
     }
     
+    //Pausa o InterController até que os processos de app estejam inicializados
+
     kill(intercontroller, SIGSTOP);
 
     startProcesses(processes, NUM_PROC);
@@ -73,12 +77,14 @@ int main() {
             exit(1);
         } else {
             processes[i].pid = pid;
+            // Pausa os processos de app logo após a criação 
             kill(processes[i].pid, SIGSTOP);
         }
     }
 
     printf("[Kernel] - Kernel inicializado.\n");
 
+    //Após os processos em app estarem prontos, continua o InterController
     kill(intercontroller, SIGCONT);
 
 
@@ -116,6 +122,7 @@ int main() {
             }
         }
         
+        //Ao pressionar Ctrl+C, imprime informações sobre os processos e pausa
         if(pause_flag) {
             printProcessStates(processes, NUM_PROC);
             for(int i = 0; i < NUM_PROC; i++)
@@ -125,6 +132,7 @@ int main() {
             kill(intercontroller, SIGSTOP);
             pause();
         }
+        //Retoma execução dos processos em estado RUNNING e o InterController
         else{
             for(int i = 0; i < NUM_PROC; i++)
             {
@@ -139,6 +147,8 @@ int main() {
             break;
         }
     }
+
+    // Envia sinal para finalizar o InterController 
     kill(intercontroller, SIGUSR1);
     waitpid(0, NULL, 0);
     printProcessStates(processes, NUM_PROC);
