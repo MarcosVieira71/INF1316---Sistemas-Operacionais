@@ -6,12 +6,13 @@
 
 //A cada timeslice, interrompe o processo atual e retoma o próximo processo em estado READY
 int timeSlice(int *current, Process* processes, int num_proc) {
-    if(processes[*current].state == RUNNING) {
-        kill(processes[*current].pid, SIGSTOP);
-        if(processes[*current].state != TERMINATED)
-            processes[*current].state = READY;
+    if (*current < 0 || *current >= num_proc) {
+        if(processes[*current].state == RUNNING) {
+            kill(processes[*current].pid, SIGSTOP);
+            if(processes[*current].state != TERMINATED)
+                processes[*current].state = READY;
+        }
     }
-
     //Fila circular de processos
     int next = (*current + 1) % num_proc;
     for(int i = 0; i < num_proc; i++) {
