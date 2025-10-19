@@ -6,7 +6,7 @@
 
 //A cada timeslice, interrompe o processo atual e retoma o próximo processo em estado READY
 int timeSlice(int *current, Process* processes, int num_proc) {
-    if (*current < 0 || *current >= num_proc) {
+    if (*current < num_proc || *current >= 0) {
         if(processes[*current].state == RUNNING) {
             kill(processes[*current].pid, SIGSTOP);
             if(processes[*current].state != TERMINATED)
