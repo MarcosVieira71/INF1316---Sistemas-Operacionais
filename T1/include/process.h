@@ -10,6 +10,8 @@ typedef struct {
     int PC;
     State state;
     char blocked_on;
+    int d1_accesses;
+    int d2_accesses;
 } Process;
 
 void startProcesses(Process* p, int n);
