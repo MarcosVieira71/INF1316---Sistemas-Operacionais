@@ -9,6 +9,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/wait.h>
+
 
 #define NUM_PROC 5
 
@@ -21,6 +23,8 @@ void sigintHandler(int sig) {
 
 int main() {
     Process processes[NUM_PROC];
+    pid_t intercontroller;
+
     pid_t queue_D1[NUM_PROC];
     int n_D1 = 0;
     pid_t queue_D2[NUM_PROC];
@@ -37,23 +41,43 @@ int main() {
        openFIFO(&fd_syscall, FIFO_SYSCALL, O_RDONLY | O_NONBLOCK) == -1) {
         exit(1);
     }
+    
+    intercontroller = fork();
+    if(intercontroller < 0){
+        exit(1);
+    }
+    else if(intercontroller == 0)
+    {
+        signal(SIGINT, SIG_IGN); 
+        execl("./intercontroller", "./intercontroller", NULL);
+        exit(1);
+    }
+    
+    kill(intercontroller, SIGSTOP);
 
     startProcesses(processes, NUM_PROC);
 
     for(int i = 0; i < NUM_PROC; i++) {
         pid_t pid = fork();
         if(pid < 0) {
-            perror("fork");
             exit(1);
         } else if(pid == 0) {
+            signal(SIGINT, SIG_IGN); 
             execl("./app", "./app", NULL);
             exit(1);
         } else {
             processes[i].pid = pid;
+            kill(processes[i].pid, SIGSTOP);
         }
     }
 
     printf("[Kernel] - Kernel inicializado.\n");
+    for(int i = 0; i < NUM_PROC; i++)
+    {
+        kill(processes[i].pid, SIGCONT);
+    }
+    
+    kill(intercontroller, SIGCONT);
 
 
     int current = 0;
@@ -62,7 +86,8 @@ int main() {
 
     while(1) {
         // IRQ
-        if(read(fd_irq, &irq_buf, 1) > 0) {
+        if(read(fd_irq, &irq_buf, 1) > 0)
+        {
             handleIrqFifo(irq_buf, &current, processes, NUM_PROC,
                           queue_D1, &n_D1, queue_D2, &n_D2);
         }
@@ -91,17 +116,36 @@ int main() {
         
         if(pause_flag) {
             printProcessStates(processes, NUM_PROC);
-            while(pause_flag) sleep(1);
+            for(int i = 0; i < NUM_PROC; i++)
+            {
+                kill(processes[i].pid, SIGSTOP);
+            }
+            kill(intercontroller, SIGSTOP);
+            pause();
+        }
+        else{
+            for(int i = 0; i < NUM_PROC; i++)
+            {
+                if(processes[i].state == RUNNING){
+                    kill(processes[i].pid, SIGCONT);
+                }
+            }
+            kill(intercontroller, SIGCONT);
         }
 
         if(allProcessesTerminated(processes, NUM_PROC)){
             break;
         }
     }
-
+    kill(intercontroller, SIGUSR1);
+    waitpid(0, NULL, 0);
+    
     printf("[Kernel] - Kernel finalizando. Todos os processos acabaram sua execução\n");
-
     close(fd_irq);
     close(fd_syscall);
+    
+    unlink(FIFO_IRQ);
+    unlink(FIFO_SYSCALL);
+    
     return 0;
 }

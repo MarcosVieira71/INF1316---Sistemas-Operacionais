@@ -12,7 +12,6 @@
 #define MAX 5
 
 int main(int argc, char *argv[]) {
-    signal(SIGINT, SIG_IGN); 
 
     int fd;
 
@@ -55,7 +54,7 @@ int main(int argc, char *argv[]) {
         fflush(stdout);
     }
 
-    printf("[App %d] - Finalizado (PC=%d)\n", pid, PC);
     close(fd);
+    printf("[App %d] - Finalizado (PC=%d)\n", pid, PC);
     return 0;
 }
