@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     fflush(stdout);
 
     while (PC < MAX) {
-        sleep(1);
+        usleep(500000);
         PC++;
 
         char dev = '-';
@@ -52,6 +52,8 @@ int main(int argc, char *argv[]) {
 
         printf("[App %d] - PC=%d executando...\n", pid, PC);
         fflush(stdout);
+
+        usleep(500000);
     }
 
     close(fd);

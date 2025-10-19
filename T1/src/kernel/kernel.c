@@ -72,11 +72,7 @@ int main() {
     }
 
     printf("[Kernel] - Kernel inicializado.\n");
-    for(int i = 0; i < NUM_PROC; i++)
-    {
-        kill(processes[i].pid, SIGCONT);
-    }
-    
+
     kill(intercontroller, SIGCONT);
 
 
