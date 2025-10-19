@@ -139,7 +139,7 @@ int main() {
     }
     kill(intercontroller, SIGUSR1);
     waitpid(0, NULL, 0);
-    
+    printProcessStates(processes, NUM_PROC);
     printf("[Kernel] - Kernel finalizando. Todos os processos acabaram sua execução\n");
     close(fd_irq);
     close(fd_syscall);

@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 
-#define MAX 5
+#define MAX 20
 
 int main(int argc, char *argv[]) {
 
