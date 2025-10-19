@@ -110,7 +110,11 @@ int main() {
 
             if(sscanf(syscall_msg, "%d %c %c %d %s", &pid, &dev, &op, &pc, state) == 5) {
                 int idx = findProcessIndexByPid(processes, NUM_PROC, pid);
-                if(idx == -1) return -2;
+                //Deve sempre encontrar o processo
+                if(idx == -1) {
+                    printf("Erro: processo não encontrado");
+                    exit(1);
+                } 
                 processes[idx].PC = pc;
 
                 if(strcmp(state, "TERMINATED") == 0) {
