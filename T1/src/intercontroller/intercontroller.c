@@ -10,13 +10,13 @@
 
 sig_atomic_t running_flag = 1;
 
-void sigintHandler(int sig) {
+void sigusr1Handler(int sig) {
     running_flag = 0;
 }
 
 int main() {
     int fd;
-    signal(SIGUSR1, sigintHandler);
+    signal(SIGUSR1, sigusr1Handler);
 
     srand(time(NULL));
 

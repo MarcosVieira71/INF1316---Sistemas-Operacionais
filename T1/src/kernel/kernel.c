@@ -20,6 +20,11 @@ void sigintHandler(int sig) {
     pause_flag = !pause_flag;
 }
 
+void sigtstpHandler(int sig) {
+    printf("[Kernel] - Recebido SIGTSTP (Ctrl+Z), encerrando todos os processos...\n");
+    kill(0, SIGTERM);
+    exit(0);
+}
 
 int main() {
     Process processes[NUM_PROC];
@@ -31,6 +36,7 @@ int main() {
     int n_D2 = 0;
 
     signal(SIGINT, sigintHandler);
+    signal(SIGTSTP, sigtstpHandler);
 
     if(makeFIFO(FIFO_IRQ) == -1 || makeFIFO(FIFO_SYSCALL) == -1) {
         exit(1);
@@ -76,7 +82,7 @@ int main() {
     kill(intercontroller, SIGCONT);
 
 
-    int current = 0;
+    int current = -1;
     char irq_buf;
     char syscall_msg[32];
 
