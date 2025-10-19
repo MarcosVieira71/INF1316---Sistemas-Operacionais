@@ -4,7 +4,6 @@
 #include <time.h>
 #include <fcntl.h>
 
-#define FIFO_IRQ "/tmp/fifo_irq"
 #include "fifo.h"
 
 int main() {

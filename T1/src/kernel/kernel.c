@@ -12,10 +12,10 @@
 
 #define NUM_PROC 5
 
-sig_atomic_t print_flag = 0;
+sig_atomic_t pause_flag = 0;
 
 void sigintHandler(int sig) {
-    print_flag = 1;
+    pause_flag = !pause_flag;
 }
 
 
@@ -27,6 +27,16 @@ int main() {
     int n_D2 = 0;
 
     signal(SIGINT, sigintHandler);
+
+    if(makeFIFO(FIFO_IRQ) == -1 || makeFIFO(FIFO_SYSCALL) == -1) {
+        exit(1);
+    }
+
+    int fd_irq, fd_syscall;
+    if(openFIFO(&fd_irq, FIFO_IRQ, O_RDONLY | O_NONBLOCK) == -1 ||
+       openFIFO(&fd_syscall, FIFO_SYSCALL, O_RDONLY | O_NONBLOCK) == -1) {
+        exit(1);
+    }
 
     startProcesses(processes, NUM_PROC);
 
@@ -40,21 +50,7 @@ int main() {
             exit(1);
         } else {
             processes[i].pid = pid;
-            processes[i].state = READY;
-            processes[i].PC = 0;
-            processes[i].blocked_on = 0;
         }
-    }
-
-
-    if(makeFIFO(FIFO_IRQ) == -1 || makeFIFO(FIFO_SYSCALL) == -1) {
-        exit(1);
-    }
-
-    int fd_irq, fd_syscall;
-    if(openFIFO(&fd_irq, FIFO_IRQ, O_RDONLY |  O_NONBLOCK) == -1 ||
-       openFIFO(&fd_syscall, FIFO_SYSCALL, O_RDONLY |  O_NONBLOCK) == -1) {
-        exit(1);
     }
 
     printf("[Kernel] - Kernel inicializado.\n");
@@ -81,6 +77,7 @@ int main() {
 
             if(sscanf(syscall_msg, "%d %c %c %d %s", &pid, &dev, &op, &pc, state) == 5) {
                 int idx = findProcessIndexByPid(processes, NUM_PROC, pid);
+                if(idx == -1) return -2;
                 processes[idx].PC = pc;
 
                 if(strcmp(state, "TERMINATED") == 0) {
@@ -92,9 +89,9 @@ int main() {
             }
         }
         
-        if(print_flag) {
+        if(pause_flag) {
             printProcessStates(processes, NUM_PROC);
-            print_flag = 0; 
+            while(pause_flag) sleep(1);
         }
 
         if(allProcessesTerminated(processes, NUM_PROC)){
