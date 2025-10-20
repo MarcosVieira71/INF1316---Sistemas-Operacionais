@@ -119,6 +119,7 @@ int main() {
 
                 if(strcmp(state, "TERMINATED") == 0) {
                     processes[idx].state = TERMINATED;
+                    kill(processes[idx].pid, SIGCONT);
                 } else if(dev != '-') {
                     handleSyscallMessage(pid, dev, op, processes, NUM_PROC,
                                         queue_D1, &n_D1, queue_D2, &n_D2);
@@ -154,7 +155,12 @@ int main() {
 
     // Envia sinal para finalizar o InterController 
     kill(intercontroller, SIGUSR1);
-    waitpid(0, NULL, 0);
+
+    for (int i = 0; i < NUM_PROC; i++) {
+        waitpid(processes[i].pid, NULL, 0);
+    }
+    waitpid(intercontroller, NULL, 0);
+
     printProcessStates(processes, NUM_PROC);
     printf("[Kernel] - Kernel finalizando. Todos os processos acabaram sua execução\n");
     close(fd_irq);
