@@ -37,13 +37,13 @@ int main() {
         // IRQ1: probabilidade de 10%
         if ((rand() % 100) < 10) {
             write(fd, "1", 1);
-            printf("[InterController] - IRQ1 (D1 terminou I/O)\n");
+            printf("[InterController] - IRQ1 (D1 terminou)\n");
         }
 
         // IRQ2: probabilidade de 5%
         if ((rand() % 100) < 5) {
             write(fd, "2", 1);
-            printf("[InterController] - IRQ2 (D2 terminou I/O)\n");
+            printf("[InterController] - IRQ2 (D2 terminou)\n");
         }
     }
     close(fd);
