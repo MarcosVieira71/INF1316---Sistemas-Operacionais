@@ -81,7 +81,7 @@ int main()
     {
         char name_shm[32];
 
-        sprintf(name_shm, "/shm_a%d", i + 1);
+        sprintf(name_shm, "/shm_A%d", i + 1);
 
         int fd = shm_open(name_shm, O_CREAT | O_RDWR, 0666);
 
