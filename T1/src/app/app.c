@@ -9,52 +9,52 @@
 #include <sys/stat.h>
 #include <signal.h>
 
+#include "shm_msg.h"
+#include "app_functions.h"
+
 #define MAX 20
 
 int main(int argc, char *argv[]) {
 
-    int fd;
-
-    srand(getpid() ^ time(NULL));
-
-    if(openFIFO(&fd, FIFO_SYSCALL, O_WRONLY) == -1) {
+    if (argc < 2) {
+        printf("Uso: ./app <n>\n");
         exit(1);
     }
 
+    int owner = atoi(argv[1]);
     int PC = 0;
     int pid = getpid();
-    printf("[App %d] - Iniciado (PID=%d)\n", pid, pid); 
-    fflush(stdout);
+
+    int offsets[] = {0,16,32,48,64};
+
+    char shm_name[32];
+    sprintf(shm_name, "/shm_A%d", owner);
+
+    shm_msg *shm = NULL;
+
+    if (open_shared_memory(shm_name, &shm) < 0)
+        exit(1);
+
+    printf("[App %d] iniciado como A%d (PID=%d)\n", owner, owner, pid);
+    srand(pid ^ time(NULL));
 
     while (PC < MAX) {
+
         usleep(500000);
         PC++;
 
-        char dev = '-';
-        char op = '-';
-        char state[16] = "RUNNING";
-
-        // 15% chance de syscall
         int r = rand() % 100;
-        if (r < 15) {  
-            dev = (rand() % 2) ? '1' : '2';
-            op = "RWX"[rand() % 3];
-            printf("[App %d] -> syscall(D%c, %c)\n", pid, dev, op);
+
+        if (r < 10) {
+            prepare_syscall(shm, owner, offsets);
         }
 
-        if(PC >= MAX) {
-            strcpy(state, "TERMINATED");
-        }
+        handle_reply(shm, owner);
 
-        char msg[64];
-        sprintf(msg, "%d %c %c %d %s\n", pid, dev, op, PC, state);
-        write(fd, msg, strlen(msg));
-
-        printf("[App %d] - PC=%d executando...\n", pid, PC);
+        printf("[App %d] executando... PC=%d\n", owner, PC);
         usleep(500000);
     }
 
-    printf("[App %d] - Finalizado (PC=%d)\n", pid, PC);
-    close(fd);
+    printf("[App %d] finalizado. PC=%d\n", owner, PC);
     return 0;
 }

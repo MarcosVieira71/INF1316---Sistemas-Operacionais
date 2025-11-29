@@ -17,6 +17,7 @@ set(SRC_COMMON
 
 add_executable(app
     src/app/app.c
+    src/app/app_functions.c
     ${SRC_COMMON}
 )
 
