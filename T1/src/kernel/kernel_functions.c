@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "shm_msg.h"
+
 //A cada timeslice, interrompe o processo atual e retoma o próximo processo em estado READY
 int timeSlice(int *current, Process* processes, int num_proc) {
     if (*current < num_proc && *current >= 0) {
@@ -40,34 +42,25 @@ int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc) {
     return idx;
 }
 
-void handleSyscallMessage(pid_t pid, char dev, char op,
-                          Process* processes, int num_proc,
-                          pid_t queue_D1[], int *n_D1,
-                          pid_t queue_D2[], int *n_D2)
-{
-    int idx = findProcessIndexByPid(processes, num_proc, pid);
-    if(idx == -1) return;
+void handleSyscallMessage(size_t idx, Process* processes, int num_proc) {
+
+    if (idx == -1) return;
 
     processes[idx].state = BLOCKED;
-    processes[idx].blocked_on = dev;
 
-    kill(pid, SIGSTOP);
+    // pausa imediatamente
+    kill(processes[idx].pid, SIGSTOP);
 
-    if(dev == '1'){
-        enqueue(queue_D1, n_D1, pid);
-        processes[idx].d1_accesses++;
-    } 
-    else if(dev == '2'){
-        enqueue(queue_D2, n_D2, pid);
-        processes[idx].d2_accesses++;
-    } 
-
-    processes[idx].op = op;
+    printf("[Kernel] Processo A%d bloqueado aguardando resposta do SFSS\n", idx+1);
 }
 
-
-void handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
-                  pid_t queue_D1[], int* n_D1, pid_t queue_D2[], int* n_D2 )
+void handleIrqFifo(char buf,
+                   int *current,
+                   Process* processes,
+                   int num_proc,
+                   shm_msg* shm[],
+                   kernel_reply fileQueue[], int* nFile,
+                   kernel_reply dirQueue[], int* nDir)
 {
     switch(buf) {
         case '0': {
@@ -76,42 +69,35 @@ void handleIrqFifo(char buf, int *current, Process* processes, int num_proc,
                 printf("[Kernel] - Processo %d agora RUNNING\n", running + 1);
             break;
         }
-        case '1': {
-            int idx = releaseDevice(queue_D1, n_D1, processes, num_proc);
-            if(idx >= 0) {
-                printf("[Kernel] - Processo %d desbloqueado do dispositivo D1\n", idx + 1);
-            }
-                
+        case '1':   // IRQ1
+            deliverFileReply(processes, shm, fileQueue, nFile);
             break;
-        }
-        case '2': {
-            int idx = releaseDevice(queue_D2, n_D2, processes, num_proc);
-            if(idx >= 0) {
-                printf("[Kernel] - Processo %d desbloqueado do dispositivo D2\n", idx + 1);
-            }
-  
+
+        case '2':   // IRQ2
+            deliverDirReply(processes, shm, dirQueue, nDir);
             break;
-        }
+
     }
 }
 
 void printProcessStates(Process* processes, int num_proc) 
 {
     printf("=== Estados dos Processos ===\n");
-    for(int i = 0; i < num_proc; i++) {
+
+    for (int i = 0; i < num_proc; i++) {
+
         printf("Processo %d (PID=%d): PC=%d, Estado=%s",
-               i+1, processes[i].pid, processes[i].PC,
-               (processes[i].state == RUNNING) ? "RUNNING" :
-               (processes[i].state == READY) ? "READY" :
-               (processes[i].state == BLOCKED) ? "BLOCKED" :
-               "TERMINATED");
-        if(processes[i].state == BLOCKED)
-            printf(", Bloqueado em D%c na operação %c", processes[i].blocked_on, processes[i].op);
-        printf(", D1: %d, D2: %d", processes[i].d1_accesses, processes[i].d2_accesses);
+            i+1, processes[i].pid, processes[i].PC,
+            (processes[i].state == RUNNING) ? "RUNNING" :
+            (processes[i].state == READY) ? "READY" :
+            (processes[i].state == BLOCKED) ? "BLOCKED" :
+            "TERMINATED"
+        );
         printf("\n");
     }
     printf("============================\n");
 }
+
 
 int allProcessesTerminated(Process* processes, int num_proc) 
 {
@@ -120,4 +106,60 @@ int allProcessesTerminated(Process* processes, int num_proc)
             return 0;
     }
     return 1; 
+}
+
+
+void deliverFileReply(Process* processes,
+                      shm_msg* shm[],
+                      kernel_reply fileQueue[],
+                      int *nFile)
+{
+    if (*nFile == 0)
+        return; // nada para entregar
+
+    // remove o mais antigo
+    kernel_reply kr = dequeueReply(fileQueue, nFile);
+
+    int owner = kr.rep.owner;   // 1..5
+    int idx = owner - 1;
+
+    // preencher shared memory do app correto
+    shm[idx]->error = kr.rep.error;
+
+    if (kr.rep.payloadLen > 0)
+        memcpy(shm[idx]->payload, kr.rep.payload, kr.rep.payloadLen);
+
+    shm[idx]->has_reply = 1;
+
+    // desbloquear processo correspondente
+    processes[idx].state = READY;
+    kill(processes[idx].pid, SIGCONT);
+
+    printf("[Kernel] Entreguei FILE reply para A%d (op=%s)\n", owner, kr.op);
+}
+
+void deliverDirReply(Process* processes,
+                     shm_msg* shm[],
+                     kernel_reply dirQueue[],
+                     int *nDir)
+{
+    if (*nDir == 0)
+        return; // sem resposta a entregar
+
+    kernel_reply kr = dequeueReply(dirQueue, nDir);
+
+    int owner = kr.rep.owner;   // 1..5
+    int idx = owner - 1;
+
+    shm[idx]->error = kr.rep.error;
+
+    if (kr.rep.payloadLen > 0)
+        memcpy(shm[idx]->payload, kr.rep.payload, kr.rep.payloadLen);
+
+    shm[idx]->has_reply = 1;
+
+    processes[idx].state = READY;
+    kill(processes[idx].pid, SIGCONT);
+
+    printf("[Kernel] Entreguei DIR reply para A%d (op=%s)\n", owner, kr.op);
 }

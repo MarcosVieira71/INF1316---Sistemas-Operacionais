@@ -70,11 +70,38 @@ void handle_reply(shm_msg *shm, int owner) {
     if (!shm->has_reply)
         return;
 
+    printf("[App %d] <- Resposta recebida para operação %s\n",
+           owner, shm->op);
+
     if (shm->error < 0) {
-        printf("[App %d] -> ERRO! cod=%d\n", owner, shm->error);
-    } else {
-        printf("[App %d] -> resposta recebida (%s)\n",
-               owner, shm->op);
+        printf("   ERRO: código %d\n", shm->error);
+        clear_shm_fields(shm);
+        return;
+    }
+
+    if (strcmp(shm->op, "RD") == 0) {
+        printf("   READ OK: payload recebido = \"");
+        for (int i = 0; i < 16; i++)
+            putchar(shm->payload[i]);
+        printf("\"\n");
+
+    } else if (strcmp(shm->op, "WR") == 0) {
+        printf("   WRITE OK: 16 bytes foram escritos.\n");
+
+    } else if (strcmp(shm->op, "DC") == 0) {
+        printf("   ADD DIR OK: novo path = %s\n", shm->path);
+
+    } else if (strcmp(shm->op, "DR") == 0) {
+        printf("   REMOVE OK: novo path = %s\n", shm->path);
+
+    } else if (strcmp(shm->op, "DL") == 0) {
+        printf("   LISTDIR OK:\n");
+        printf("   payload (compactado) = \"");
+        for (int i = 0; i < 16; i++)
+            putchar(shm->payload[i]);
+        printf("\"\n");
+        printf("   strlenPath = %d\n", shm->strlenPath);
+        printf("   strlenDirName = %d\n", shm->strlenDirName);
     }
 
     clear_shm_fields(shm);

@@ -35,11 +35,11 @@ int main()
     Process processes[NUM_PROC];
     pid_t intercontroller;
 
-    // Filas para processos esperando nos dispositivos D1 e D2
-    pid_t queue_D1[NUM_PROC];
-    int n_D1 = 0;
-    pid_t queue_D2[NUM_PROC];
-    int n_D2 = 0;
+    kernel_reply fileQueue[NUM_PROC];
+    int nFile = 0;
+
+    kernel_reply dirQueue[NUM_PROC];
+    int nDir = 0;
 
     signal(SIGINT, sigintHandler);
     signal(SIGTSTP, sigtstpHandler);
@@ -134,8 +134,13 @@ int main()
         // IRQ
         if (read(fd_irq, &irq_buf, 1) > 0)
         {
-            handleIrqFifo(irq_buf, &current, processes, NUM_PROC,
-                          queue_D1, &n_D1, queue_D2, &n_D2);
+            handleIrqFifo(irq_buf, 
+                        &current,
+                        processes,
+                        shm,
+                        NUM_PROC,
+                        fileQueue, &nFile,
+                        dirQueue, &nDir);
         }
 
         for (int i = 0; i < NUM_PROC; i++)
