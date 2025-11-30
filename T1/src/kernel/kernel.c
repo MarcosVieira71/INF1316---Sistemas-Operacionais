@@ -3,7 +3,7 @@
 #include "process.h"
 #include "queue.h"
 #include "shm_msg.h"
-#include "udp_client.h"
+#include "udp_client_functions.h"
 #include "udp_req.h"
 
 #include <stdio.h>
@@ -76,6 +76,8 @@ int main()
     // Pausa o InterController até que os processos de app estejam inicializados
 
     kill(intercontroller, SIGSTOP);
+
+    cleanOldShms(NUM_PROC);
 
     startProcesses(processes, NUM_PROC);
 
@@ -157,7 +159,13 @@ int main()
                         dirQueue, &nDir);
         }
 
-        recvUdpReply(udpSock, shm, processes);
+        kernel_reply* reply = recvUdpReply(udpSock, shm, processes);
+        if(reply == NULL) fprintf(stderr, "Erro na response"); 
+        if(reply->op == "RD" || reply->op == "WR") 
+        {
+            enqueueReply(fileQueue, &nFile, reply);
+        }
+        else enqueueReply(dirQueue, &nDir, reply);
 
         for (int i = 0; i < NUM_PROC; i++)
         {
@@ -241,16 +249,7 @@ int main()
 
     if(udpSock >= 0) close(udpSock);
 
-    for(int i = 0; i < NUM_PROC; i++) 
-    {
-        if(shm[i]) munmap(shm[i], sizeof(shm_msg));
-
-        char name_shm[32];
-        sprintf(name_shm, "/shm_A%d", i + 1);
-        shm_unlink(name_shm);
-    }
-
-    
+    closeShms(NUM_PROC, shm);
 
     return 0;
 }

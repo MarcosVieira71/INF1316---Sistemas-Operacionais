@@ -1,7 +1,9 @@
 #include "shm_msg.h"
 #include "udp_req.h"
 #include "udp_rep.h"
-#include "udp_client.h"
+#include "kernel_reply.h"
+#include "udp_client_functions.h"
+#include "process.h"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -64,24 +66,29 @@ int sendUdpRequest(int sockfd, struct sockaddr_in* srvAddr, const udp_req* req)
     return 0;
 }
 
-int recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
+kernel_reply* recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
 {
-    udp_rep reply;
+    udp_rep response;
     struct sockaddr_in src;
     socklen_t slen = sizeof(src);
 
-    int n = recvfrom(sockfd, &reply, sizeof(reply), 0, (struct sockaddr*)&src, &slen);
+    int n = recvfrom(sockfd, &response, sizeof(response), 0, (struct sockaddr*)&src, &slen);
 
-    if(n <= 0) return 0;
+    if(n <= 0) return NULL;
 
-    int idx = reply.owner - 1;
+    int idx = response.owner - 1;
 
-    printf("[Kernel] Reply recebida do servidor para owner=%d\n", reply.owner);
+    printf("[Kernel] Reply recebida do servidor para owner=%d\n", response.owner);
 
-    shm[idx]->error = reply.error;
+    shm[idx]->error = response.error;
     shm[idx]->has_reply = 1;
 
-    if (reply.payloadLen > 0) memcpy(shm[idx]->payload, reply.payload, reply.payloadLen);
+    if (response.payloadLen > 0) memcpy(shm[idx]->payload, response.payload, response.payloadLen);
 
-    return 1;
+    kernel_reply* reply;
+
+    reply->rep = response;
+    reply->op = response.op;
+
+    return reply;
 }

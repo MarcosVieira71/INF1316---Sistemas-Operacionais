@@ -36,4 +36,8 @@ void printProcessStates(Process* processes, int num_proc);
 
 int allProcessesTerminated(Process* processes, int num_proc);
 
+void cleanOldShms(int numProc);
+
+void closeShms(int numProc, shm_msg* shm[]);
+
 #endif

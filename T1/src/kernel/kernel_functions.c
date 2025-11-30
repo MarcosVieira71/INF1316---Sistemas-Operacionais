@@ -133,7 +133,6 @@ void deliverFileReply(Process* processes,
 
     // desbloquear processo correspondente
     processes[idx].state = READY;
-    kill(processes[idx].pid, SIGCONT);
 
     printf("[Kernel] Entreguei FILE reply para A%d (op=%s)\n", owner, kr.op);
 }
@@ -159,7 +158,28 @@ void deliverDirReply(Process* processes,
     shm[idx]->has_reply = 1;
 
     processes[idx].state = READY;
-    kill(processes[idx].pid, SIGCONT);
 
     printf("[Kernel] Entreguei DIR reply para A%d (op=%s)\n", owner, kr.op);
+}
+
+void cleanOldShms(int numProc)
+{
+    for (int i = 0; i < numProc; i++) 
+    {
+        char name_shm[32];
+        sprintf(name_shm, "/shm_A%d", i + 1);
+
+        shm_unlink(name_shm);
+    }
+}
+
+
+void closeShms(int numProc, shm_msg* shm[])
+{
+    for (int i = 0; i < numProc; i++) {
+        if (shm[i] && shm[i] != MAP_FAILED) munmap(shm[i], sizeof(shm_msg));
+        char name_shm[32];
+        sprintf(name_shm, "/shm_A%d", i + 1);
+        shm_unlink(name_shm);
+    }
 }
