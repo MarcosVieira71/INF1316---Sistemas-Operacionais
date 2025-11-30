@@ -7,7 +7,7 @@ typedef struct {
     char op[8];
     char opType; 
     int payloadLen;
-    char payload[256];
+    char payload[16];
 } udp_rep;
 
 #endif

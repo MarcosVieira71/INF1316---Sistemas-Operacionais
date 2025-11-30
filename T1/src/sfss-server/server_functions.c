@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX_PAYLOAD 256
+#define MAX_PAYLOAD 16
 #define ROOT_DIR "SFS-root-dir"
 
 void handleOperation(const udp_req* req, udp_rep* rep)
@@ -38,12 +38,24 @@ void handleOperation(const udp_req* req, udp_rep* rep)
 void handleRead(const udp_req* req, udp_rep* rep)
 {
     char fullpath[256];
-    sprintf(fullpath, "%s/%s", ROOT_DIR, req->path);
+    sprintf(fullpath, "%s%s", ROOT_DIR, req->path);
 
     FILE* f = fopen(fullpath, "rb");
     if(!f)
     {
-        rep->error = -1;
+        rep->offset = -1;
+        rep->payloadLen = 0;
+        return;
+    }
+
+    long fileSize = getFileSize(f);
+
+    // Retorna offset negativo caso o offset seja maior que o tamanho do arquivo
+    if (req->offset >= fileSize)
+    {
+        rep->offset = -2; 
+        rep->payloadLen = 0;
+        fclose(f);
         return;
     }
 
@@ -52,6 +64,7 @@ void handleRead(const udp_req* req, udp_rep* rep)
     int n = fread(rep->payload, 1, MAX_PAYLOAD, f);
     rep->payloadLen = n;
     rep->error = 0;
+    rep->offset = n;
 
     fclose(f);
 }
@@ -59,14 +72,14 @@ void handleRead(const udp_req* req, udp_rep* rep)
 void handleWrite(const udp_req* req, udp_rep* rep)
 {
     char fullpath[256];
-    sprintf(fullpath, "%s/%s", ROOT_DIR, req->path);
+    sprintf(fullpath, "%s%s", ROOT_DIR, req->path);
 
     if (req->payloadLen == 0 && req->offset == 0)
     {
         if (unlink(fullpath) == 0)
-            rep->error = 0;
+            rep->offset = 0;
         else
-            rep->error = -1; 
+            rep->offset = -1; 
         return;
     }
 
@@ -77,20 +90,32 @@ void handleWrite(const udp_req* req, udp_rep* rep)
         f = fopen(fullpath, "w+b");  
         if (!f)
         {
-            rep->error = -2; 
+            rep->offset = -2; 
             return;
         }
     }
 
-    // posiciona no offset
-    fseek(f, req->offset, SEEK_SET);
+    long fileSize = getFileSize(f);
 
+    // Preenche espaços vazios com whitespace, caso offset seja maior que o tamanho do arquivo
+    if(req->offset > fileSize)
+    {
+        long gap = req->offset - fileSize;
+        fseek(f, fileSize, SEEK_SET);
+
+        for(long i = 0; i < gap; i++)
+        {
+            fputc(0x20, f);
+        }
+    }
     
+    fseek(f, req->offset, SEEK_SET);
     int n = fwrite(req->payload, 1, req->payloadLen, f);
+
     if (n != req->payloadLen)
-        rep->error = -3;  
+        rep->offset = -3;  
     else
-        rep->error = 0;
+        rep->offset = req->offset;
 
     fclose(f);
 
@@ -154,4 +179,10 @@ void handleListDir(const udp_req* req, udp_rep* rep)
     rep->error = 0;
 
     closedir(d);
+}
+
+long getFileSize(FILE* f) 
+{
+    fseek(f, 0, SEEK_END);
+    return ftell(f);
 }

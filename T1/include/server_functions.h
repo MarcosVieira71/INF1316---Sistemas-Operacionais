@@ -8,7 +8,11 @@
 
 
 void handleOperation(const udp_req* req, udp_rep* rep);
-
 void handleRead(const udp_req* req, udp_rep* rep);
+void handleWrite(const udp_req* req, udp_rep* rep);
+void handleCreateDir(const udp_req* req, udp_rep* rep);
+void handleRemoveDir(const udp_req* req, udp_rep* rep);
+void handleListDir(const udp_req* req, udp_rep* rep);
+long getFileSize(FILE* f);
 
 #endif

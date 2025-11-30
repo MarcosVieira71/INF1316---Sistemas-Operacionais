@@ -44,6 +44,7 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
     } else if (tipo == 1) { // WRITE
         strcpy(shm->op, "WR");
         memset(shm->payload, 'A' + (owner % 26), 16);
+        shm->payloadLen = 16;
         printf("[App %d] syscall: write(%s)\n", owner, shm->path);
 
     } else if (tipo == 2) { // ADD DIR
@@ -117,6 +118,8 @@ void clear_shm_fields(shm_msg *shm) {
     memset(shm->path, 0, sizeof(shm->path));
     memset(shm->dirname, 0, sizeof(shm->dirname));
     memset(shm->payload, 0, sizeof(shm->payload));
+
+    shm->payloadLen = 0;
 
     shm->offset = 0;
     shm->strlenPath = 0;

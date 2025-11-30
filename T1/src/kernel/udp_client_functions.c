@@ -53,7 +53,8 @@ void buildReqFromShm(udp_req* req, const shm_msg* shm)
     req->dirnameLen = (int)strnlen(shm->dirname, sizeof(shm->dirname));
     if (req->dirnameLen > 0) memcpy(req->dirname, shm->dirname, req->dirnameLen);
 
-    req->payloadLen = sizeof(shm->payload);
+    req->payloadLen = (shm->payloadLen > sizeof(req->payload)) ? sizeof(req->payload) : shm->payloadLen;
+
     memcpy(req->payload, shm->payload, req->payloadLen);
 }
 

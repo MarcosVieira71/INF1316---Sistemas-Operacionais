@@ -10,6 +10,7 @@ typedef struct {
     char dirname[64];  // nome do diretório para DC/DR
 
     char payload[16];  // dados para WR ou recebidos no RD
+    int payloadLen;
 
     int offset;        // múltiplo de 16
     int owner;         // 1..5 (app A1..A5)
