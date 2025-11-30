@@ -7,6 +7,7 @@
 typedef struct {
     udp_rep rep;   // a resposta UDP bruta
     char op[4];    // "RD", "WR", "DC", "DR", "DL"
+    int valid;     // 0 para reply inválida e 1 para válida
 } kernel_reply;
 
 void enqueueReply(kernel_reply queue[], int *n, kernel_reply item);

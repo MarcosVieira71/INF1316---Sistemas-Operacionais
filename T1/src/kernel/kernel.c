@@ -163,11 +163,14 @@ int main()
 
         kernel_reply reply = recvUdpReply(udpSock, shm, processes);
 
-        if(!strcmp(reply.op, "RD") || !strcmp(reply.op, "WR")) 
+        if(reply.valid)
         {
-            enqueueReply(fileQueue, &nFile, reply);
+            if(!strcmp(reply.op, "RD") || !strcmp(reply.op, "WR")) 
+            {
+                enqueueReply(fileQueue, &nFile, reply);
+            }
+            else enqueueReply(dirQueue, &nDir, reply);
         }
-        else enqueueReply(dirQueue, &nDir, reply);
 
         for (int i = 0; i < NUM_PROC; i++)
         {

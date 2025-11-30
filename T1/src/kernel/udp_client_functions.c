@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 int createUdpSocket(const char* serverIp, int serverPort, struct sockaddr_in* srvAddr)
 {
@@ -77,6 +78,24 @@ kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
 
     int n = recvfrom(sockfd, &response, sizeof(response), 0, (struct sockaddr*)&src, &slen);
 
+    kernel_reply reply = {0};
+
+    if(n < 0)
+    {
+        // Response pode ser vazia porque a socket é non-block
+        if(errno == EAGAIN || errno == EWOULDBLOCK)
+        {
+            reply.valid = 0;
+            return reply;
+        }
+         // Erro real
+        perror("recvfrom");    
+        reply.valid = 0;
+        return reply;
+    }
+
+    reply.valid = 1;
+
     int idx = response.owner - 1;
 
     printf("[Kernel] Reply recebida do servidor para owner=%d\n", response.owner);
@@ -85,8 +104,6 @@ kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
     shm[idx]->has_reply = 1;
 
     if (response.payloadLen > 0) memcpy(shm[idx]->payload, response.payload, response.payloadLen);
-
-    kernel_reply reply;
 
     reply.rep = response;
     strcpy(reply.op, response.op);
