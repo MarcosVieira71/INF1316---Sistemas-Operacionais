@@ -98,7 +98,7 @@ int main()
             exit(1);
         }
 
-        ftruncate(fd, sizeof(shm_msg));
+        ftruncate(fd, sizeof(shm_msg)); // define o tamanho do objeto de shared memory
 
         shm[i] = mmap(NULL, sizeof(shm_msg), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
@@ -163,7 +163,7 @@ int main()
 
         kernel_reply reply = recvUdpReply(udpSock, shm, processes);
 
-        if(reply.op == "RD" || reply.op == "WR") 
+        if(!strcmp(reply.op, "RD") || !strcmp(reply.op, "WR")) 
         {
             enqueueReply(fileQueue, &nFile, reply);
         }
