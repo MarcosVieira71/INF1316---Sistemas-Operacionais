@@ -13,7 +13,7 @@ typedef struct {
     char dirname[64];
 
     int payloadLen;
-    char payload[16];
+    char payload[256];
 } udp_req;
 
 #endif
