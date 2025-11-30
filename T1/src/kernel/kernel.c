@@ -1,11 +1,11 @@
-#include "kernel_functions.h"
+#include "kernel/kernel_functions.h"
+#include "kernel/kernel_reply.h"
 #include "fifo.h"
 #include "process.h"
 #include "queue.h"
 #include "shm_msg.h"
-#include "udp_client_functions.h"
+#include "kernel/udp_client_functions.h"
 #include "udp_req.h"
-#include "kernel_reply.h"
 
 #include <stdio.h>
 #include <string.h>

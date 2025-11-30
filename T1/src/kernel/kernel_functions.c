@@ -1,4 +1,4 @@
-#include "kernel_functions.h"
+#include "kernel/kernel_functions.h"
 #include "queue.h"
 #include <signal.h>
 #include <stdio.h>

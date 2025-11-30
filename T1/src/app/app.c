@@ -10,7 +10,7 @@
 #include <signal.h>
 
 #include "shm_msg.h"
-#include "app_functions.h"
+#include "app/app_functions.h"
 
 #define MAX 20
 

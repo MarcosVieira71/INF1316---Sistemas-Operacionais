@@ -1,8 +1,8 @@
 #include "shm_msg.h"
 #include "udp_req.h"
 #include "udp_rep.h"
-#include "kernel_reply.h"
-#include "udp_client_functions.h"
+#include "kernel/kernel_reply.h"
+#include "kernel/udp_client_functions.h"
 #include "process.h"
 
 #include <sys/socket.h>
