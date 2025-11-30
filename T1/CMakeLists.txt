@@ -29,5 +29,7 @@ add_executable(intercontroller
 add_executable(kernel
     src/kernel/kernel.c
     src/kernel/kernel_functions.c
+    src/kernel/kernel_reply.c
+    src/kernel/udp_client_functions.c
     ${SRC_COMMON}
 )

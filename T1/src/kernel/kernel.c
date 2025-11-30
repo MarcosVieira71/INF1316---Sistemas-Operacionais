@@ -5,6 +5,7 @@
 #include "shm_msg.h"
 #include "udp_client_functions.h"
 #include "udp_req.h"
+#include "kernel_reply.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -76,13 +77,11 @@ int main()
     // Pausa o InterController até que os processos de app estejam inicializados
 
     kill(intercontroller, SIGSTOP);
-
     cleanOldShms(NUM_PROC);
 
     startProcesses(processes, NUM_PROC);
 
     shm_msg *shm[NUM_PROC];
-
     // Cria uma shared memory para cada processo
 
     for (int i = 0; i < NUM_PROC; i++)
@@ -118,15 +117,18 @@ int main()
 
     for (int i = 0; i < NUM_PROC; i++)
     {
+
         pid_t pid = fork();
         if (pid < 0)
-        {
+        {    
             exit(1);
         }
         else if (pid == 0)
         {
+            char ownerStr[16];
+            sprintf(ownerStr, "%d", i + 1);
             signal(SIGINT, SIG_IGN);
-            execl("./app", "./app", NULL);
+            execl("./app", "./app", ownerStr, NULL);
             exit(1);
         }
         else
@@ -153,15 +155,15 @@ int main()
             handleIrqFifo(irq_buf, 
                         &current,
                         processes,
-                        shm,
                         NUM_PROC,
+                        shm,
                         fileQueue, &nFile,
                         dirQueue, &nDir);
         }
 
-        kernel_reply* reply = recvUdpReply(udpSock, shm, processes);
-        if(reply == NULL) fprintf(stderr, "Erro na response"); 
-        if(reply->op == "RD" || reply->op == "WR") 
+        kernel_reply reply = recvUdpReply(udpSock, shm, processes);
+
+        if(reply.op == "RD" || reply.op == "WR") 
         {
             enqueueReply(fileQueue, &nFile, reply);
         }

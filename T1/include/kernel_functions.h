@@ -4,13 +4,13 @@
 #include "process.h"
 #include "queue.h"
 #include "kernel_reply.h"
-
+#include "shm_msg.h"
 #include <unistd.h>
 
 int timeSlice(int *current, Process* processes, int num_proc);
 int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc);
 
-void handleSyscallMessage(size_t idx, Process* processes, int num_proc);
+void handleSyscallMessage(int idx, Process* processes, int num_proc);
 
 void deliverFileReply(Process* processes,
                       shm_msg* shm[],

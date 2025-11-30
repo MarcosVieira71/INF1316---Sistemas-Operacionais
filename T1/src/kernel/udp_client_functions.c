@@ -9,6 +9,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 int createUdpSocket(const char* serverIp, int serverPort, struct sockaddr_in* srvAddr)
 {
@@ -66,15 +69,13 @@ int sendUdpRequest(int sockfd, struct sockaddr_in* srvAddr, const udp_req* req)
     return 0;
 }
 
-kernel_reply* recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
+kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
 {
     udp_rep response;
     struct sockaddr_in src;
     socklen_t slen = sizeof(src);
 
     int n = recvfrom(sockfd, &response, sizeof(response), 0, (struct sockaddr*)&src, &slen);
-
-    if(n <= 0) return NULL;
 
     int idx = response.owner - 1;
 
@@ -85,10 +86,10 @@ kernel_reply* recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
 
     if (response.payloadLen > 0) memcpy(shm[idx]->payload, response.payload, response.payloadLen);
 
-    kernel_reply* reply;
+    kernel_reply reply;
 
-    reply->rep = response;
-    reply->op = response.op;
+    reply.rep = response;
+    strcpy(reply.op, response.op);
 
     return reply;
 }

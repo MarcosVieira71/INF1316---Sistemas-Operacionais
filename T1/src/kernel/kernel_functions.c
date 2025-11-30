@@ -3,6 +3,9 @@
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "shm_msg.h"
 
@@ -42,7 +45,7 @@ int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc) {
     return idx;
 }
 
-void handleSyscallMessage(size_t idx, Process* processes, int num_proc) {
+void handleSyscallMessage(int idx, Process* processes, int num_proc) {
 
     if (idx == -1) return;
 

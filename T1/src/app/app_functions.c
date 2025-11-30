@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 int open_shared_memory(const char *name, shm_msg **shm) {
     int shm_fd = shm_open(name, O_RDWR, 0666);

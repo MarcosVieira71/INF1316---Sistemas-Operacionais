@@ -15,13 +15,14 @@
 #define MAX 20
 
 int main(int argc, char *argv[]) {
-
     if (argc < 2) {
+
         printf("Uso: ./app <n>\n");
         exit(1);
     }
 
     int owner = atoi(argv[1]);
+    printf("o que tá indo aqui ? %d\n", owner);
     int PC = 0;
     int pid = getpid();
 
