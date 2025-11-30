@@ -3,6 +3,8 @@
 #include "process.h"
 #include "queue.h"
 #include "shm_msg.h"
+#include "udp_client.h"
+#include "udp_req.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -13,6 +15,10 @@
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
 
 #define NUM_PROC 5
 
@@ -100,6 +106,14 @@ int main()
         close(fd);
     }
 
+    struct sockaddr_in serverAddr;
+    int udpSock = createUdpSocket("127.0.0.1", 6000, &serverAddr);
+
+    if (udpSock < 0) {
+        fprintf(stderr, "[Kernel] Erro ao criar socket UDP\n");
+    }
+
+
     for (int i = 0; i < NUM_PROC; i++)
     {
         pid_t pid = fork();
@@ -143,9 +157,11 @@ int main()
                         dirQueue, &nDir);
         }
 
+        recvUdpReply(udpSock, shm, processes);
+
         for (int i = 0; i < NUM_PROC; i++)
         {
-            if (shm[i]->has_request)
+            if (shm[i]->has_request && processes[i].state != BLOCKED)
             {
 
                 printf("[Kernel] Recebido request do processo A%d:\n", i + 1);
@@ -157,6 +173,24 @@ int main()
                 shm[i]->has_request = 0;
                 kill(processes[i].pid, SIGSTOP);
                 processes[i].state = BLOCKED;
+
+                udp_req req;
+                buildReqFromShm(&req, shm[i]);
+
+                if(udpSock >= 0)
+                {
+                    if(sendUdpRequest(udpSock, &serverAddr, &req) != 0) 
+                    {
+                        // TODO: tratar erro
+                        
+                    }
+                   
+                }
+                else 
+                {
+                    // TODO: tratar erro 
+                }
+
             }
         }
 
@@ -204,6 +238,19 @@ int main()
     close(fd_irq);
 
     unlink(FIFO_IRQ);
+
+    if(udpSock >= 0) close(udpSock);
+
+    for(int i = 0; i < NUM_PROC; i++) 
+    {
+        if(shm[i]) munmap(shm[i], sizeof(shm_msg));
+
+        char name_shm[32];
+        sprintf(name_shm, "/shm_A%d", i + 1);
+        shm_unlink(name_shm);
+    }
+
+    
 
     return 0;
 }
