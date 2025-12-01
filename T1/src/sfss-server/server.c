@@ -22,6 +22,7 @@ int main(void) {
     servAddr.sin_port = htons(6000);
 
     bind(sock, (struct sockaddr*)&servAddr, sizeof(servAddr));
+    printf("[SFS] Servidor de gerência de arquivos inicializado\n");
 
     while(1)
     {
