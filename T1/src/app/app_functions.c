@@ -29,40 +29,46 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
     memset(shm, 0, sizeof(shm_msg));
     shm->owner = owner;
 
-    int tipo = rand() % 5;   // 0=read,1=write,2=add,3=rem,4=listdir
+    int type = rand() % 5;   // 0=read,1=write,2=add,3=rem,4=listdir
     int d = rand() % 3;
     int f = rand() % 5;
 
-    sprintf(shm->path, "/A%d/dir%d/file%d", owner, d, f);
-    shm->strlenPath = strlen(shm->path);
     shm->offset = offsets[rand() % 5];
 
-    if (tipo == 0) { // READ
-        strcpy(shm->op, "RD");
-        printf("[App %d] syscall: read(%s)\n", owner, shm->path);
+    static const char* ops[] = {"RD", "WR", "DC", "DR", "DL"};
+    strcpy(shm->op, ops[type]);
 
-    } else if (tipo == 1) { // WRITE
-        strcpy(shm->op, "WR");
+    if(type == 0 || type == 1) sprintf(shm->path, "/A%d/dir%d/file%d", owner, d, f); // caminho para operações em arquivo
+    else sprintf(shm->path, "/A%d/dir%d", owner, d); // caminho para operações em diretório
+
+    if(type == 1) // WRITE
+    {
         memset(shm->payload, 'A' + (owner % 26), 16);
         shm->payloadLen = 16;
-        printf("[App %d] syscall: write(%s)\n", owner, shm->path);
-
-    } else if (tipo == 2) { // ADD DIR
-        strcpy(shm->op, "DC");
+    }
+    else if(type == 2) // ADD DIR
+    {
         strcpy(shm->dirname, "novoDir");
         shm->strlenDirName = strlen(shm->dirname);
-        printf("[App %d] syscall: add(%s)\n", owner, shm->path);
-
-    } else if (tipo == 3) { // REMOVE DIR
-        strcpy(shm->op, "DR");
+    }
+    else if(type == 3) // REMOVE DIR
+    {
         strcpy(shm->dirname, "toRemove");
         shm->strlenDirName = strlen(shm->dirname);
-        printf("[App %d] syscall: rem(%s)\n", owner, shm->path);
-
-    } else { // LISTDIR
-        strcpy(shm->op, "DL");
-        printf("[App %d] syscall: listdir(%s)\n", owner, shm->path);
     }
+
+    shm->strlenPath = strlen(shm->path);
+
+    printf(
+        "[App %d] syscall: %s(%s)\n",
+        owner,
+        (type == 0) ? "read" :
+        (type == 1) ? "write" :
+        (type == 2) ? "add"   :
+        (type == 3) ? "rem"   :
+                      "listdir",
+        shm->path
+    );
 
     shm->has_reply = 0;
     shm->has_request = 1;
