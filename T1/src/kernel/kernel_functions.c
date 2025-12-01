@@ -47,12 +47,12 @@ int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc) {
 }
 
 void handleProcessRequests(Process *processes,
-                           int numProc,
+                           int num_proc,
                            shm_msg **shm,
                            int udpSock,
                            struct sockaddr_in *serverAddr)
 {
-    for (int i = 0; i < numProc; i++)
+    for (int i = 0; i < num_proc; i++)
     {
         processes[i].PC = shm[i]->pc;
 
@@ -195,9 +195,9 @@ void deliverDirReply(Process* processes,
     printf("[Kernel] Entreguei DIR reply para A%d (op=%s)\n", owner, kr.op);
 }
 
-void cleanOldShms(int numProc)
+void cleanOldShms(int num_proc)
 {
-    for (int i = 0; i < numProc; i++) 
+    for (int i = 0; i < num_proc; i++) 
     {
         char name_shm[32];
         sprintf(name_shm, "/shm_A%d", i + 1);
@@ -207,9 +207,9 @@ void cleanOldShms(int numProc)
 }
 
 
-void closeShms(int numProc, shm_msg* shm[])
+void closeShms(int num_proc, shm_msg* shm[])
 {
-    for (int i = 0; i < numProc; i++) {
+    for (int i = 0; i < num_proc; i++) {
         if (shm[i] && shm[i] != MAP_FAILED) munmap(shm[i], sizeof(shm_msg));
         char name_shm[32];
         sprintf(name_shm, "/shm_A%d", i + 1);
@@ -219,14 +219,14 @@ void closeShms(int numProc, shm_msg* shm[])
 
 void handlePauseAndResume(int pause_flag,
                           Process *processes,
-                          int numProc,
+                          int num_proc,
                           pid_t intercontroller)
 {
     if (pause_flag)
     {
-        printProcessStates(processes, numProc);
+        printProcessStates(processes, num_proc);
 
-        for (int i = 0; i < numProc; i++)
+        for (int i = 0; i < num_proc; i++)
         {
             kill(processes[i].pid, SIGSTOP);
         }
@@ -236,7 +236,7 @@ void handlePauseAndResume(int pause_flag,
     }
     else
     {
-        for (int i = 0; i < numProc; i++)
+        for (int i = 0; i < num_proc; i++)
         {
             if (processes[i].state == RUNNING)
             {
@@ -245,5 +245,22 @@ void handlePauseAndResume(int pause_flag,
         }
 
         kill(intercontroller, SIGCONT);
+    }
+}
+
+void checkTerminatedProcesses(Process *processes, int num_proc)
+{
+    for (int i = 0; i < num_proc; i++)
+    {
+        if (processes[i].state != TERMINATED)
+        {
+            int status;
+            pid_t r = waitpid(processes[i].pid, &status, WNOHANG);
+            if (r == processes[i].pid)
+            {
+                processes[i].state = TERMINATED;
+                printf("[Kernel] Processo A%d terminou.\n", i + 1);
+            }
+        }
     }
 }

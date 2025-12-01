@@ -176,6 +176,8 @@ int main()
 
         handlePauseAndResume(pause_flag, processes, NUM_PROC, intercontroller);
 
+        checkTerminatedProcesses(processes, NUM_PROC);
+
         if (allProcessesTerminated(processes, NUM_PROC))
         {
             break;

@@ -7,6 +7,8 @@
 #include "shm_msg.h"
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/wait.h>
+
 
 
 int timeSlice(int *current, Process* processes, int num_proc);
@@ -42,13 +44,15 @@ void printProcessStates(Process* processes, int num_proc);
 
 int allProcessesTerminated(Process* processes, int num_proc);
 
-void cleanOldShms(int numProc);
+void cleanOldShms(int num_proc);
 
-void closeShms(int numProc, shm_msg* shm[]);
+void closeShms(int num_proc, shm_msg* shm[]);
 
 void handlePauseAndResume(int pause_flag,
                           Process *processes,
-                          int numProc,
+                          int num_proc,
                           pid_t intercontroller);
+
+void checkTerminatedProcesses(Process *processes, int num_proc);
 
 #endif
