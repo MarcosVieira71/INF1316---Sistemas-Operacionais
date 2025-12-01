@@ -49,9 +49,15 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
     }
 
     if (type == 1) { // WRITE
-        memset(shm->payload, 'A' + (owner % 26), 16);
-        shm->payloadLen = 16;
-    } else if (type == 2) { // ADD DIR
+        int empty_write = rand() % 5 == 0;
+        if (empty_write) {
+            shm->payloadLen = 0;
+        } else {
+            memset(shm->payload, 'A' + (owner % 26), 16);
+            shm->payloadLen = 16;
+        }
+    }
+    else if (type == 2) { // ADD DIR
         strcpy(shm->dirname, "novoDir");
         shm->strlenDirName = strlen(shm->dirname);
     } else if (type == 3) { // REMOVE DIR
