@@ -38,41 +38,40 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
     static const char* ops[] = {"RD", "WR", "DC", "DR", "DL"};
     strcpy(shm->op, ops[type]);
 
-    if(type == 0 || type == 1) sprintf(shm->path, "/A%d/dir%d/file%d", owner, d, f); // caminho para operações em arquivo
-    else sprintf(shm->path, "/A%d/dir%d", owner, d); // caminho para operações em diretório
+    // Escolhe aleatoriamente entre o diretório próprio e o A0
+    int target_dir = (rand() % 2 == 0) ? owner : 0;
 
-    if(type == 1) // WRITE
-    {
+    // Monta path conforme tipo
+    if (type == 0 || type == 1) { // READ ou WRITE
+        sprintf(shm->path, "/A%d/dir%d/file%d", target_dir, d, f);
+    } else {                     // ADD, REM, LISTDIR
+        sprintf(shm->path, "/A%d/dir%d", target_dir, d);
+    }
+
+    if (type == 1) { // WRITE
         memset(shm->payload, 'A' + (owner % 26), 16);
         shm->payloadLen = 16;
-    }
-    else if(type == 2) // ADD DIR
-    {
+    } else if (type == 2) { // ADD DIR
         strcpy(shm->dirname, "novoDir");
         shm->strlenDirName = strlen(shm->dirname);
-    }
-    else if(type == 3) // REMOVE DIR
-    {
+    } else if (type == 3) { // REMOVE DIR
         strcpy(shm->dirname, "toRemove");
         shm->strlenDirName = strlen(shm->dirname);
     }
 
     shm->strlenPath = strlen(shm->path);
 
-    printf(
-        "[App %d] syscall: %s(%s)\n",
-        owner,
-        (type == 0) ? "read" :
-        (type == 1) ? "write" :
-        (type == 2) ? "add"   :
-        (type == 3) ? "rem"   :
-                      "listdir",
-        shm->path
-    );
+    printf("[App %d] syscall: %s(%s)\n", owner,
+           (type == 0) ? "read" :
+           (type == 1) ? "write" :
+           (type == 2) ? "add" :
+           (type == 3) ? "rem" : "listdir",
+           shm->path);
 
     shm->has_reply = 0;
     shm->has_request = 1;
 }
+
 
 void handle_reply(shm_msg *shm, int owner) {
     if (!shm->has_reply)
