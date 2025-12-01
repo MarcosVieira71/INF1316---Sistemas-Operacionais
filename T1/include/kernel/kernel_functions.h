@@ -6,11 +6,17 @@
 #include "kernel_reply.h"
 #include "shm_msg.h"
 #include <unistd.h>
+#include <arpa/inet.h>
+
 
 int timeSlice(int *current, Process* processes, int num_proc);
 int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc);
 
-void handleSyscallMessage(int idx, Process* processes, int num_proc);
+void handleProcessRequests(Process *processes,
+                           int numProc,
+                           shm_msg **shm,
+                           int udpSock,
+                           struct sockaddr_in *serverAddr);
 
 void deliverFileReply(Process* processes,
                       shm_msg* shm[],
@@ -39,5 +45,10 @@ int allProcessesTerminated(Process* processes, int num_proc);
 void cleanOldShms(int numProc);
 
 void closeShms(int numProc, shm_msg* shm[]);
+
+void handlePauseAndResume(int pause_flag,
+                          Process *processes,
+                          int numProc,
+                          pid_t intercontroller);
 
 #endif

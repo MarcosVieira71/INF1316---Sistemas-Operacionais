@@ -172,64 +172,9 @@ int main()
             else enqueueReply(dirQueue, &nDir, reply);
         }
 
-        for (int i = 0; i < NUM_PROC; i++)
-        {
-            processes[i].PC = shm[i]->pc;
-            if (shm[i]->has_request && processes[i].state != BLOCKED)
-            {
-                printf("[Kernel] Recebido request do processo A%d:\n", i + 1);
-                printf("op = %s\n", shm[i]->op);
-                printf("path = %s\n", shm[i]->path);
-                printf("offset = %d\n", shm[i]->offset);
-                printf("owner = %d\n", shm[i]->owner);
+        handleProcessRequests(processes, NUM_PROC, shm, udpSock, &serverAddr);
 
-                shm[i]->has_request = 0;
-                kill(processes[i].pid, SIGSTOP);
-                processes[i].state = BLOCKED;
-
-                udp_msg req;
-                buildReqFromShm(&req, shm[i]);
-
-                if(udpSock >= 0)
-                {
-                    if(sendUdpRequest(udpSock, &serverAddr, &req) != 0) 
-                    {
-                        // TODO: tratar erro
-                        
-                    }
-                   
-                }
-                else 
-                {
-                    // TODO: tratar erro 
-                }
-
-            }
-        }
-
-        // Ao pressionar Ctrl+C, imprime informações sobre os processos e pausa
-        if (pause_flag)
-        {
-            printProcessStates(processes, NUM_PROC);
-            for (int i = 0; i < NUM_PROC; i++)
-            {
-                kill(processes[i].pid, SIGSTOP);
-            }
-            kill(intercontroller, SIGSTOP);
-            pause();
-        }
-        // Retoma execução dos processos em estado RUNNING e o InterController
-        else
-        {
-            for (int i = 0; i < NUM_PROC; i++)
-            {
-                if (processes[i].state == RUNNING)
-                {
-                    kill(processes[i].pid, SIGCONT);
-                }
-            }
-            kill(intercontroller, SIGCONT);
-        }
+        handlePauseAndResume(pause_flag, processes, NUM_PROC, intercontroller);
 
         if (allProcessesTerminated(processes, NUM_PROC))
         {

@@ -8,6 +8,7 @@
 #include <fcntl.h>
 
 #include "shm_msg.h"
+#include "kernel/udp_client_functions.h"
 
 //A cada timeslice, interrompe o processo atual e retoma o próximo processo em estado READY
 int timeSlice(int *current, Process* processes, int num_proc) {
@@ -45,16 +46,45 @@ int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc) {
     return idx;
 }
 
-void handleSyscallMessage(int idx, Process* processes, int num_proc) {
+void handleProcessRequests(Process *processes,
+                           int numProc,
+                           shm_msg **shm,
+                           int udpSock,
+                           struct sockaddr_in *serverAddr)
+{
+    for (int i = 0; i < numProc; i++)
+    {
+        processes[i].PC = shm[i]->pc;
 
-    if (idx == -1) return;
+        if (shm[i]->has_request && processes[i].state != BLOCKED)
+        {
+            printf("[Kernel] Recebido request do processo A%d:\n", i + 1);
+            printf("op = %s\n", shm[i]->op);
+            printf("path = %s\n", shm[i]->path);
+            printf("offset = %d\n", shm[i]->offset);
+            printf("owner = %d\n", shm[i]->owner);
 
-    processes[idx].state = BLOCKED;
+            shm[i]->has_request = 0;
 
-    // pausa imediatamente
-    kill(processes[idx].pid, SIGSTOP);
+            kill(processes[i].pid, SIGSTOP);
+            processes[i].state = BLOCKED;
 
-    printf("[Kernel] Processo A%d bloqueado aguardando resposta do SFSS\n", idx+1);
+            udp_msg req;
+            buildReqFromShm(&req, shm[i]);
+
+            if (udpSock >= 0)
+            {
+                if (sendUdpRequest(udpSock, serverAddr, &req) != 0)
+                {
+                    // TODO: tratamento de erro
+                }
+            }
+            else
+            {
+                // TODO: tratamento de erro
+            }
+        }
+    }
 }
 
 void handleIrqFifo(char buf,
@@ -184,5 +214,36 @@ void closeShms(int numProc, shm_msg* shm[])
         char name_shm[32];
         sprintf(name_shm, "/shm_A%d", i + 1);
         shm_unlink(name_shm);
+    }
+}
+
+void handlePauseAndResume(int pause_flag,
+                          Process *processes,
+                          int numProc,
+                          pid_t intercontroller)
+{
+    if (pause_flag)
+    {
+        printProcessStates(processes, numProc);
+
+        for (int i = 0; i < numProc; i++)
+        {
+            kill(processes[i].pid, SIGSTOP);
+        }
+
+        kill(intercontroller, SIGSTOP);
+        pause();    // Aguarda o próximo sinal
+    }
+    else
+    {
+        for (int i = 0; i < numProc; i++)
+        {
+            if (processes[i].state == RUNNING)
+            {
+                kill(processes[i].pid, SIGCONT);
+            }
+        }
+
+        kill(intercontroller, SIGCONT);
     }
 }
