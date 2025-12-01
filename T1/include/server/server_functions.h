@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 
+void ensureDirExists(const char* path);
 void handleOperation(const udp_msg* req, udp_msg* rep);
 void handleRead(const udp_msg* req, udp_msg* rep);
 void handleWrite(const udp_msg* req, udp_msg* rep);

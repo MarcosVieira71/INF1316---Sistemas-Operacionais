@@ -1,3 +1,4 @@
+#include "server/server_functions.h"
 #include "udp_msg.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +7,11 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+#define ROOT_DIR "SFS-root-dir"
+
 int main(void) {
+    ensureDirExists(ROOT_DIR);
+
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
 
     struct sockaddr_in servAddr;

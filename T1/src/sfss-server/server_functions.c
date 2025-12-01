@@ -6,14 +6,29 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #define MAX_PAYLOAD 16
 #define ROOT_DIR "SFS-root-dir"
+
+void ensureDirExists(const char* path)
+{
+    if (mkdir(path, 0777) != 0)
+    {
+        if (errno != EEXIST) {
+            perror("mkdir");
+        }
+    }
+}
 
 void handleOperation(const udp_msg* req, udp_msg* rep)
 {
     memset(rep->payload, 0, MAX_PAYLOAD);
     rep->payloadLen = 0;
+
+    char ownerDir[256];
+    snprintf(ownerDir, sizeof(ownerDir), "%s/A%d", ROOT_DIR, req->owner);
+    ensureDirExists(ownerDir);
     
     if (strcmp(req->op, "RD") == 0)
         handleRead(req, rep);
@@ -126,7 +141,8 @@ void handleCreateDir(const udp_msg* req, udp_msg* rep)
     char fullpath[256];
     snprintf(fullpath, sizeof(fullpath), "%s%s/%s", ROOT_DIR, req->path, req->dirname);
 
-    if (mkdir(fullpath, 0777) == 0){
+    if (mkdir(fullpath, 0777) == 0)
+    {
         rep->error = 0;
         snprintf(rep->path, sizeof(rep->path), "%s/%s", req->path, req->dirname);
         rep->pathLen = strlen(rep->path);
@@ -139,51 +155,64 @@ void handleCreateDir(const udp_msg* req, udp_msg* rep)
 void handleRemoveDir(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
-    sprintf(fullpath, "%s/%s", ROOT_DIR, req->path);
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", ROOT_DIR, req->path);
 
     if (rmdir(fullpath) == 0)
+    {
         rep->error = 0;
-    else
-        rep->error = -1; 
+        snprintf(rep->path, sizeof(rep->path), "%s", req->path);
+        rep->pathLen = strlen(rep->path);
+    }
+    else rep->error = -1; 
 }
 
 void handleListDir(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
-    sprintf(fullpath, "%s/%s", ROOT_DIR, req->path);
+    snprintf(fullpath, sizeof(fullpath), "%s/%s", ROOT_DIR, req->path);
+    memset(&rep->listinfo, 0, sizeof(rep->listinfo));
 
     DIR* d = opendir(fullpath);
-    if (!d)
-    {
-        rep->error = -1; 
+    if (!d) {
+        rep->error = -1;
         return;
     }
 
-    struct dirent* ent;
-    int total = 0;
+    rep->listinfo.nrnames = 0;
+    int pos = 0;
 
+    struct dirent* ent;
     while ((ent = readdir(d)) != NULL)
     {
-        // ignorar "." e ".."
+        // ignora . and ..
         if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0)
             continue;
 
-        int len = strlen(ent->d_name);
+        int nameLen = strlen(ent->d_name);
+        int idx = rep->listinfo.nrnames;
 
-        if (total + len + 1 >= MAX_PAYLOAD)
-            break; // payload cheio
+        if (pos + nameLen >= MAX_ALLNAMES)
+            break;
 
-        memcpy(rep->payload + total, ent->d_name, len);
-        total += len;
+        rep->listinfo.fstlstpositions[idx][0] = pos;
 
-        rep->payload[total++] = '\n';
+        memcpy(rep->listinfo.allnames + pos, ent->d_name, nameLen);
+
+        pos += nameLen;
+
+        rep->listinfo.fstlstpositions[idx][1] = pos - 1;
+
+        rep->listinfo.isDir[idx] =
+            (ent->d_type == DT_DIR ? 1 : 0);
+
+        rep->listinfo.nrnames++;
     }
 
-    rep->payloadLen = total;
-    rep->error = 0;
-
     closedir(d);
+
+    rep->error = 0;
 }
+
 
 long getFileSize(FILE* f) 
 {

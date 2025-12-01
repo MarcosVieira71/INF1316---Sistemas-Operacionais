@@ -43,9 +43,9 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
 
     // Monta path conforme tipo
     if (type == 0 || type == 1) { // READ ou WRITE
-        sprintf(shm->path, "/A%d/dir%d/file%d", target_dir, d, f);
+        sprintf(shm->path, "/A%d/file%d", target_dir, d);
     } else {                     // ADD, REM, LISTDIR
-        sprintf(shm->path, "/A%d/dir%d", target_dir, d);
+        sprintf(shm->path, "/A%d", target_dir);
     }
 
     if (type == 1) { // WRITE
