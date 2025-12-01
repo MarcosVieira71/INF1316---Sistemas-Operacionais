@@ -174,9 +174,9 @@ int main()
 
         for (int i = 0; i < NUM_PROC; i++)
         {
+            processes[i].PC = shm[i]->pc;
             if (shm[i]->has_request && processes[i].state != BLOCKED)
             {
-
                 printf("[Kernel] Recebido request do processo A%d:\n", i + 1);
                 printf("op = %s\n", shm[i]->op);
                 printf("path = %s\n", shm[i]->path);

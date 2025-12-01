@@ -12,6 +12,7 @@ typedef struct {
     char payload[16];  // dados para WR ou recebidos no RD
     int payloadLen;
 
+    int pc;            // program counter
     int offset;        // múltiplo de 16
     int owner;         // 1..5 (app A1..A5)
     int strlenPath;       // tamanho da string path

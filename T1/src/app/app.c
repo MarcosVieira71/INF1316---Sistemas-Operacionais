@@ -35,14 +35,14 @@ int main(int argc, char *argv[]) {
 
     if (open_shared_memory(shm_name, &shm) < 0)
         exit(1);
+    shm->pc = PC;
 
     printf("[App %d] iniciado como A%d (PID=%d)\n", owner, owner, pid);
     srand(pid ^ time(NULL));
-
     while (PC < MAX) {
-
         usleep(500000);
         PC++;
+        shm->pc = PC;
 
         int r = rand() % 100;
 

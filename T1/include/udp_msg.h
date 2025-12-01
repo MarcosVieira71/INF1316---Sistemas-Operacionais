@@ -3,6 +3,7 @@
 
 typedef struct {
     char op[8];
+    int error;
     int owner; // 1-5
     int offset;
 
