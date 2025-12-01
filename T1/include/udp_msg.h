@@ -1,5 +1,5 @@
-#ifndef UDP_REQ_H
-#define UDP_REQ_H
+#ifndef UDP_MSG_H
+#define UDP_MSG_H
 
 typedef struct {
     char op[8];
@@ -14,6 +14,6 @@ typedef struct {
 
     int payloadLen;
     char payload[16];
-} udp_req;
+} udp_msg;
 
 #endif

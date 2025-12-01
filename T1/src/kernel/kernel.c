@@ -5,7 +5,7 @@
 #include "queue.h"
 #include "shm_msg.h"
 #include "kernel/udp_client_functions.h"
-#include "udp_req.h"
+#include "udp_msg.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -187,7 +187,7 @@ int main()
                 kill(processes[i].pid, SIGSTOP);
                 processes[i].state = BLOCKED;
 
-                udp_req req;
+                udp_msg req;
                 buildReqFromShm(&req, shm[i]);
 
                 if(udpSock >= 0)

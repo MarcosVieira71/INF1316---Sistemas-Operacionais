@@ -10,7 +10,7 @@
 #define MAX_PAYLOAD 16
 #define ROOT_DIR "SFS-root-dir"
 
-void handleOperation(const udp_req* req, udp_rep* rep)
+void handleOperation(const udp_msg* req, udp_msg* rep)
 {
     memset(rep->payload, 0, MAX_PAYLOAD);
     rep->payloadLen = 0;
@@ -35,7 +35,7 @@ void handleOperation(const udp_req* req, udp_rep* rep)
     }
 }
 
-void handleRead(const udp_req* req, udp_rep* rep)
+void handleRead(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
     sprintf(fullpath, "%s%s", ROOT_DIR, req->path);
@@ -69,7 +69,7 @@ void handleRead(const udp_req* req, udp_rep* rep)
     fclose(f);
 }
 
-void handleWrite(const udp_req* req, udp_rep* rep)
+void handleWrite(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
     sprintf(fullpath, "%s%s", ROOT_DIR, req->path);
@@ -121,18 +121,21 @@ void handleWrite(const udp_req* req, udp_rep* rep)
 
 }
 
-void handleCreateDir(const udp_req* req, udp_rep* rep)
+void handleCreateDir(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
-    sprintf(fullpath, "%s/%s/%s", ROOT_DIR, req->path, req->dirname);
+    snprintf(fullpath, "%s%s/%s", ROOT_DIR, req->path, req->dirname);
 
     if (mkdir(fullpath, 0777) == 0)
         rep->error = 0;
-    else
+        snprintf(rep->path, sizeof(rep->path), "%s/%s", req->path, req->dirname);
+        rep->pathLen = strlen(rep->path);
+    else {
         rep->error = -1;  
+    }       
 }
 
-void handleRemoveDir(const udp_req* req, udp_rep* rep)
+void handleRemoveDir(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
     sprintf(fullpath, "%s/%s", ROOT_DIR, req->path);
@@ -143,7 +146,7 @@ void handleRemoveDir(const udp_req* req, udp_rep* rep)
         rep->error = -1; 
 }
 
-void handleListDir(const udp_req* req, udp_rep* rep)
+void handleListDir(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
     sprintf(fullpath, "%s/%s", ROOT_DIR, req->path);

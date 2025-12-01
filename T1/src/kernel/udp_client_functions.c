@@ -1,6 +1,5 @@
 #include "shm_msg.h"
-#include "udp_req.h"
-#include "udp_rep.h"
+#include "udp_msg.h"
 #include "kernel/kernel_reply.h"
 #include "kernel/udp_client_functions.h"
 #include "process.h"
@@ -40,7 +39,7 @@ int createUdpSocket(const char* serverIp, int serverPort, struct sockaddr_in* sr
     return sockfd;
 }
 
-void buildReqFromShm(udp_req* req, const shm_msg* shm) 
+void buildReqFromShm(udp_msg* req, const shm_msg* shm) 
 {
     memset(req, 0, sizeof(*req));
     strncpy(req->op, shm->op, sizeof(req->op)-1);
@@ -58,9 +57,9 @@ void buildReqFromShm(udp_req* req, const shm_msg* shm)
     memcpy(req->payload, shm->payload, req->payloadLen);
 }
 
-int sendUdpRequest(int sockfd, struct sockaddr_in* srvAddr, const udp_req* req)
+int sendUdpRequest(int sockfd, struct sockaddr_in* srvAddr, const udp_msg* req)
 {
-    int n = sendto(sockfd, req, sizeof(udp_req), 0,
+    int n = sendto(sockfd, req, sizeof(udp_msg), 0,
                        (struct sockaddr*)srvAddr, sizeof(*srvAddr));
     if (n < 0) 
     { 
@@ -73,7 +72,7 @@ int sendUdpRequest(int sockfd, struct sockaddr_in* srvAddr, const udp_req* req)
 
 kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
 {
-    udp_rep response;
+    udp_msg response;
     struct sockaddr_in src;
     socklen_t slen = sizeof(src);
 

@@ -1,5 +1,4 @@
-#include "udp_req.h"
-#include "udp_rep.h"
+#include "udp_msg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +20,7 @@ int main(void) {
 
     while(1)
     {
-        udp_req req;
+        udp_msg req;
         struct sockaddr_in cliAddr;
         socklen_t cliLen = sizeof(cliAddr);
 
@@ -31,7 +30,7 @@ int main(void) {
 
         printf("[SFS] Recebido request op=%s owner=%d\n", req.op, req.owner);
 
-        udp_rep rep;
+        udp_msg rep;
         memset(&rep, 0, sizeof(rep));
 
         rep.owner = req.owner;

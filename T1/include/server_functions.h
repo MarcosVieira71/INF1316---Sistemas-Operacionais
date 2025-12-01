@@ -1,18 +1,17 @@
 #ifndef SERVER_FUNCTIONS_H
 #define SERVER_FUNCTIONS_H
 
-#include "udp_rep.h"
-#include "udp_req.h"
+#include "udp_msg.h"
 
 #include <string.h>
 
 
-void handleOperation(const udp_req* req, udp_rep* rep);
-void handleRead(const udp_req* req, udp_rep* rep);
-void handleWrite(const udp_req* req, udp_rep* rep);
-void handleCreateDir(const udp_req* req, udp_rep* rep);
-void handleRemoveDir(const udp_req* req, udp_rep* rep);
-void handleListDir(const udp_req* req, udp_rep* rep);
+void handleOperation(const udp_msg* req, udp_msg* rep);
+void handleRead(const udp_msg* req, udp_msg* rep);
+void handleWrite(const udp_msg* req, udp_msg* rep);
+void handleCreateDir(const udp_msg* req, udp_msg* rep);
+void handleRemoveDir(const udp_msg* req, udp_msg* rep);
+void handleListDir(const udp_msg* req, udp_msg* rep);
 long getFileSize(FILE* f);
 
 #endif
