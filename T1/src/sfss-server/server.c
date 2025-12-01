@@ -10,6 +10,7 @@
 #define ROOT_DIR "SFS-root-dir"
 
 int main(void) {
+    system("rm -rf SFS-root-dir");
     ensureDirExists(ROOT_DIR);
 
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
