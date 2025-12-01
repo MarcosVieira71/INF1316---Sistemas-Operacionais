@@ -98,8 +98,6 @@ kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
 
     int idx = response.owner - 1;
 
-    printf("[Kernel] Reply recebida do servidor para owner=%d\n", response.owner);
-
     shm[idx]->error = response.error;
     shm[idx]->has_reply = 1;
 

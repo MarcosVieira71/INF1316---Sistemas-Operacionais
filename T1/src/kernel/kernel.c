@@ -165,11 +165,14 @@ int main()
 
         if(reply.valid)
         {
+            printf("[Kernel] Response recebida do servidor para owner=%d\n", reply.rep.owner);
             if(!strcmp(reply.op, "RD") || !strcmp(reply.op, "WR")) 
             {
                 enqueueReply(fileQueue, &nFile, reply);
             }
             else enqueueReply(dirQueue, &nDir, reply);
+            printf("[Kernel] Response enfileirada\n");
+
         }
 
         handleProcessRequests(processes, NUM_PROC, shm, udpSock, &serverAddr);
