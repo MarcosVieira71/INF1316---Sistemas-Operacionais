@@ -1,4 +1,4 @@
-#include "server_functions.h"
+#include "server/server_functions.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -124,12 +124,13 @@ void handleWrite(const udp_msg* req, udp_msg* rep)
 void handleCreateDir(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
-    snprintf(fullpath, "%s%s/%s", ROOT_DIR, req->path, req->dirname);
+    snprintf(fullpath, sizeof(fullpath), "%s%s/%s", ROOT_DIR, req->path, req->dirname);
 
-    if (mkdir(fullpath, 0777) == 0)
+    if (mkdir(fullpath, 0777) == 0){
         rep->error = 0;
         snprintf(rep->path, sizeof(rep->path), "%s/%s", req->path, req->dirname);
         rep->pathLen = strlen(rep->path);
+    }
     else {
         rep->error = -1;  
     }       

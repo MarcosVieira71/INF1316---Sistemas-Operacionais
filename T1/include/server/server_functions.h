@@ -4,7 +4,7 @@
 #include "udp_msg.h"
 
 #include <string.h>
-
+#include <stdio.h>
 
 void handleOperation(const udp_msg* req, udp_msg* rep);
 void handleRead(const udp_msg* req, udp_msg* rep);

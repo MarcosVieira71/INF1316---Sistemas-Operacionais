@@ -33,3 +33,9 @@ add_executable(kernel
     src/kernel/udp_client_functions.c
     ${SRC_COMMON}
 )
+
+add_executable(server
+    src/sfss-server/server.c
+    src/sfss-server/server_functions.c
+    ${SRC_COMMON}
+)
