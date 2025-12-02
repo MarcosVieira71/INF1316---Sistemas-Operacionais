@@ -40,6 +40,9 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
 
     // Escolhe aleatoriamente entre o diretório próprio e o A0
     int target_dir = (rand() % 2 == 0) ? owner : 0;
+    int dir_num = 1 + rand() % 3;  // 1, 2 ou 3
+    char dirname[16];
+    sprintf(dirname, "novoDir%d", dir_num);
 
     // Monta path conforme tipo
     if (type == 0 || type == 1) { // READ ou WRITE
@@ -58,10 +61,10 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
         }
     }
     else if (type == 2) { // ADD DIR
-        strcpy(shm->dirname, "novoDir");
+        strcpy(shm->dirname, dirname);
         shm->strlenDirName = strlen(shm->dirname);
     } else if (type == 3) { // REMOVE DIR
-        strcpy(shm->dirname, "toRemove");
+        strcpy(shm->dirname, dirname);
         shm->strlenDirName = strlen(shm->dirname);
     }
 
