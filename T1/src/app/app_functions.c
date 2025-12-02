@@ -7,6 +7,47 @@
 #include <stdio.h>
 #include <string.h>
 
+
+void print_syscall_info(int owner, int type, shm_msg *shm)
+{
+    if (type == 0 || type == 1) { // READ ou WRITE
+        printf("[App %d] syscall: %s\n"
+               "    Path: %s\n"
+               "    Offset: %d\n"
+               "    PayloadLen: %d\n",
+               owner,
+               (type == 0) ? "READ" : "WRITE",
+               shm->path,
+               shm->offset,
+               shm->payloadLen);
+
+        // Exibir payload apenas no WRITE e somente se houver dados
+        if (type == 1 && shm->payloadLen > 0) {
+            printf("    Payload: \"");
+            for (int k = 0; k < shm->payloadLen; k++) {
+                putchar(shm->payload[k]);
+            }
+            printf("\"\n");
+        }
+
+    } else if (type == 2 || type == 3) { // ADD_DIR ou REMOVE_DIR
+        printf("[App %d] syscall: %s\n"
+               "    Path: %s\n"
+               "    DirName: %s\n",
+               owner,
+               (type == 2) ? "ADD_DIR" : "REMOVE_DIR",
+               shm->path,
+               shm->dirname);
+
+    } else { // LISTDIR
+        printf("[App %d] syscall: LISTDIR\n"
+               "    Path: %s\n",
+               owner,
+               shm->path);
+    }
+}
+
+
 int open_shared_memory(const char *name, shm_msg **shm) {
     int shm_fd = shm_open(name, O_RDWR, 0666);
     if (shm_fd < 0) {
@@ -69,14 +110,7 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
     }
 
     shm->strlenPath = strlen(shm->path);
-
-    printf("[App %d] syscall: %s(%s)\n", owner,
-           (type == 0) ? "read" :
-           (type == 1) ? "write" :
-           (type == 2) ? "add" :
-           (type == 3) ? "rem" : "listdir",
-           shm->path);
-
+    print_syscall_info(owner, type, shm);
     shm->has_reply = 0;
     shm->has_request = 1;
 }

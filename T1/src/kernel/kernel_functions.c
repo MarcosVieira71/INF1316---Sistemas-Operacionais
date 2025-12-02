@@ -59,10 +59,10 @@ void handleProcessRequests(Process *processes,
         if (shm[i]->has_request && processes[i].state != BLOCKED)
         {
             printf("[Kernel] Recebido request do processo A%d:\n", i + 1);
-            printf("op = %s\n", shm[i]->op);
-            printf("path = %s\n", shm[i]->path);
-            printf("offset = %d\n", shm[i]->offset);
-            printf("owner = %d\n", shm[i]->owner);
+            // printf("op = %s\n", shm[i]->op);
+            // printf("path = %s\n", shm[i]->path);
+            // printf("offset = %d\n", shm[i]->offset);
+            // printf("owner = %d\n", shm[i]->owner);
 
             shm[i]->has_request = 0;
 

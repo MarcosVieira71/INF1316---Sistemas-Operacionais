@@ -162,6 +162,7 @@ int main()
         }
 
         kernel_reply reply = recvUdpReply(udpSock, shm, processes);
+        print_kernel_response(&reply);
 
         if(reply.valid)
         {

@@ -14,5 +14,6 @@ void enqueueReply(kernel_reply queue[], int *n, kernel_reply item);
 
 kernel_reply dequeueReply(kernel_reply queue[], int *n);
 
+void print_kernel_response(kernel_reply *reply);
 
 #endif
