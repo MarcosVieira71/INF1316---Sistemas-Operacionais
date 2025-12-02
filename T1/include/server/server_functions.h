@@ -14,5 +14,6 @@ void handleCreateDir(const udp_msg* req, udp_msg* rep);
 void handleRemoveDir(const udp_msg* req, udp_msg* rep);
 void handleListDir(const udp_msg* req, udp_msg* rep);
 long getFileSize(FILE* f);
+void buildOwnerDir(const udp_msg* req);
 
 #endif

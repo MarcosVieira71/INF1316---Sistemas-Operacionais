@@ -26,9 +26,7 @@ void handleOperation(const udp_msg* req, udp_msg* rep)
     memset(rep->payload, 0, MAX_PAYLOAD);
     rep->payloadLen = 0;
 
-    char ownerDir[256];
-    snprintf(ownerDir, sizeof(ownerDir), "%s/A%d", ROOT_DIR, req->owner);
-    ensureDirExists(ownerDir);
+    buildOwnerDir(req);
     
     if (strcmp(req->op, "RD") == 0)
         handleRead(req, rep);
@@ -218,4 +216,20 @@ long getFileSize(FILE* f)
 {
     fseek(f, 0, SEEK_END);
     return ftell(f);
+}
+
+void buildOwnerDir(const udp_msg* req)
+{
+    char ownerDir[256];
+    int id = -1;
+
+    if(req->path[0] == '/' && req->path[1] == 'A') 
+    {
+        id = atoi(&req->path[2]);
+        
+    }
+    if(id < 0) id = req->owner;
+
+    snprintf(ownerDir, sizeof(ownerDir), "%s/A%d", ROOT_DIR, id);
+    ensureDirExists(ownerDir);
 }
