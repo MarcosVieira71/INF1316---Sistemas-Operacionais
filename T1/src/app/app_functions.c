@@ -87,7 +87,15 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
 
     // Monta path conforme tipo
     if (type == 0 || type == 1) { // READ ou WRITE
-        sprintf(shm->path, "/A%d/file%d", target_dir, d);
+        int nested = rand() % 2; // 0 = simples, 1 = com subdiretorio
+
+        if (nested) {
+            // Path: /A<target>/novoDirX/file<d>
+            sprintf(shm->path, "/A%d/%s/file%d", target_dir, dirname, d);
+        } else {
+            // Path simples: /A<target>/file<d>
+            sprintf(shm->path, "/A%d/file%d", target_dir, d);
+        }
     } else {                     // ADD, REM, LISTDIR
         sprintf(shm->path, "/A%d", target_dir);
     }
