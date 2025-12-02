@@ -153,7 +153,7 @@ void handleCreateDir(const udp_msg* req, udp_msg* rep)
 void handleRemoveDir(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", ROOT_DIR, req->path);
+    snprintf(fullpath, sizeof(fullpath), "%s/%s/%s", ROOT_DIR, req->path, req->dirname);
 
     if (rmdir(fullpath) == 0)
     {
@@ -198,7 +198,7 @@ void handleListDir(const udp_msg* req, udp_msg* rep)
 
         pos += nameLen;
 
-        rep->listinfo.fstlstpositions[idx][1] = pos - 1;
+        rep->listinfo.fstlstpositions[idx][1] = pos;
 
         rep->listinfo.isDir[idx] =
             (ent->d_type == DT_DIR ? 1 : 0);

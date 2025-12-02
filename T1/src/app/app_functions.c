@@ -96,10 +96,8 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
             // Path simples: /A<target>/file<d>
             sprintf(shm->path, "/A%d/file%d", target_dir, d);
         }
-    } else if (type == 2 || type == 3) { // ADD_DIR, REMOVE_DIR
-        sprintf(shm->path, "/A%d/%s", target_dir, dirname);
-    }
-    else { // LISTDIR
+    } 
+    else { // ADD DIR, REMOVE DIR, LISTDIR
         sprintf(shm->path, "/A%d", target_dir);
     }
 
