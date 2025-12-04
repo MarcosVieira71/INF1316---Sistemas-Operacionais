@@ -178,7 +178,7 @@ int main()
 
         handleProcessRequests(processes, NUM_PROC, shm, udpSock, &serverAddr);
 
-        handlePauseAndResume(pause_flag, processes, NUM_PROC, intercontroller);
+        handlePauseAndResume(pause_flag, processes, NUM_PROC, intercontroller, fileQueue, nFile, dirQueue, nDir);
 
         checkTerminatedProcesses(processes, NUM_PROC);
 

@@ -41,6 +41,7 @@ void handleIrqFifo(char buf,
 
 
 void printProcessStates(Process* processes, int num_proc);
+void printResponseQueues(kernel_reply* fileQueue, int nFile, kernel_reply* dirQueue, int nDir);
 
 int allProcessesTerminated(Process* processes, int num_proc);
 
@@ -51,7 +52,7 @@ void closeShms(int num_proc, shm_msg* shm[]);
 void handlePauseAndResume(int pause_flag,
                           Process *processes,
                           int num_proc,
-                          pid_t intercontroller);
+                          pid_t intercontroller, kernel_reply* fileQueue, int nFile, kernel_reply* dirQueue, int nDir);
 
 void checkTerminatedProcesses(Process *processes, int num_proc);
 

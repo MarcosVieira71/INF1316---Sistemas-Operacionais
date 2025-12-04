@@ -42,7 +42,7 @@ int releaseDevice(pid_t queue[], int *n, Process* processes, int num_proc) {
 
     processes[idx].state = READY;
     processes[idx].blocked_on = 0;
-    processes[idx].op = 0;
+    strcpy(processes[idx].op, "0");
     return idx;
 }
 
@@ -68,6 +68,7 @@ void handleProcessRequests(Process *processes,
 
             kill(processes[i].pid, SIGSTOP);
             processes[i].state = BLOCKED;
+            strcpy(processes[i].op, shm[i]->op);
 
             udp_msg req;
             buildReqFromShm(&req, shm[i]);
@@ -76,12 +77,12 @@ void handleProcessRequests(Process *processes,
             {
                 if (sendUdpRequest(udpSock, serverAddr, &req) != 0)
                 {
-                    // TODO: tratamento de erro
+                    
                 }
             }
             else
             {
-                // TODO: tratamento de erro
+                
             }
         }
     }
@@ -126,9 +127,43 @@ void printProcessStates(Process* processes, int num_proc)
             (processes[i].state == BLOCKED) ? "BLOCKED" :
             "TERMINATED"
         );
+        if(processes[i].state == BLOCKED) printf("  OP=%s", processes[i].op);
         printf("\n");
     }
-    printf("============================\n");
+    printf("=====================================\n");
+}
+
+void printResponseQueues(kernel_reply* fileQueue, int nFile, kernel_reply* dirQueue, int nDir)
+{
+    printf("=== File Replies Enfileiradas ===\n");
+
+    for (int i = 0; i < nFile; i++) {
+        kernel_reply* r = &fileQueue[i];
+
+        printf("[%d] valid=%d  op=%s  owner=%d\n",
+               i,
+               r->valid,
+               r->op,
+               r->rep.owner
+        );
+    }
+
+    printf("=====================================\n");
+
+    printf("=== Directory Replies Enfileiradas ===\n");
+
+    for (int i = 0; i < nDir; i++) {
+        kernel_reply* r = &dirQueue[i];
+
+        printf("[%d] valid=%d  op=%s  owner=%d\n",
+               i,
+               r->valid,
+               r->op,
+               r->rep.owner
+        );
+    }
+
+    printf("=====================================\n");
 }
 
 
@@ -166,6 +201,7 @@ void deliverFileReply(Process* processes,
 
     // desbloquear processo correspondente
     processes[idx].state = READY;
+    strcpy(processes[idx].op, "0");
 
     printf("[Kernel] Entreguei FILE reply para A%d (op=%s)\n", owner, kr.op);
 }
@@ -191,6 +227,7 @@ void deliverDirReply(Process* processes,
     shm[idx]->has_reply = 1;
 
     processes[idx].state = READY;
+    strcpy(processes[idx].op, "0");
 
     printf("[Kernel] Entreguei DIR reply para A%d (op=%s)\n", owner, kr.op);
 }
@@ -220,11 +257,12 @@ void closeShms(int num_proc, shm_msg* shm[])
 void handlePauseAndResume(int pause_flag,
                           Process *processes,
                           int num_proc,
-                          pid_t intercontroller)
+                          pid_t intercontroller, kernel_reply* fileQueue, int nFile, kernel_reply* dirQueue, int nDir)
 {
     if (pause_flag)
     {
         printProcessStates(processes, num_proc);
+        printResponseQueues(fileQueue, nFile, dirQueue, nDir);
 
         for (int i = 0; i < num_proc; i++)
         {

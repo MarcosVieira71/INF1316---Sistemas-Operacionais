@@ -1,5 +1,6 @@
 #include "process.h"
 #include <stdio.h>
+#include <string.h>
 
 void startProcesses(Process* p, int n)
 {
@@ -7,10 +8,7 @@ void startProcesses(Process* p, int n)
         p[i].pid = 0; 
         p[i].PC = 0;
         p[i].state = READY;
-        p[i].blocked_on = 0;  
-        p[i].d1_accesses = 0;
-        p[i].d2_accesses = 0;
-        p[i].op = 0;
+        strcpy(p[i].op, "0");
     }
 }
 

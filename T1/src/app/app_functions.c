@@ -67,7 +67,6 @@ int open_shared_memory(const char *name, shm_msg **shm) {
 }
 
 void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
-    // memset(shm, 0, sizeof(shm_msg));
     shm->owner = owner;
 
     int type = rand() % 5;   // 0=read,1=write,2=add,3=rem,4=listdir
