@@ -140,9 +140,8 @@ void printResponseQueues(kernel_reply* fileQueue, int nFile, kernel_reply* dirQu
     for (int i = 0; i < nFile; i++) {
         kernel_reply* r = &fileQueue[i];
 
-        printf("[%d] valid=%d  op=%s  owner=%d\n",
+        printf("[%d] op=%s  owner=%d\n",
                i,
-               r->valid,
                r->op,
                r->rep.owner
         );
@@ -155,9 +154,8 @@ void printResponseQueues(kernel_reply* fileQueue, int nFile, kernel_reply* dirQu
     for (int i = 0; i < nDir; i++) {
         kernel_reply* r = &dirQueue[i];
 
-        printf("[%d] valid=%d  op=%s  owner=%d\n",
+        printf("[%d] op=%s  owner=%d\n",
                i,
-               r->valid,
                r->op,
                r->rep.owner
         );
@@ -197,6 +195,10 @@ void deliverFileReply(Process* processes,
     if (kr.rep.payloadLen > 0)
         memcpy(shm[idx]->payload, kr.rep.payload, kr.rep.payloadLen);
 
+    shm[idx]->offset = kr.rep.offset;
+    strcpy(shm[idx]->path, kr.rep.path);
+    shm[idx]->payloadLen = kr.rep.payloadLen;
+    shm[idx]->strlenPath = kr.rep.pathLen;
     shm[idx]->has_reply = 1;
 
     // desbloquear processo correspondente
@@ -223,6 +225,12 @@ void deliverDirReply(Process* processes,
 
     if (kr.rep.payloadLen > 0)
         memcpy(shm[idx]->payload, kr.rep.payload, kr.rep.payloadLen);
+
+    shm[idx]->offset = kr.rep.offset;
+    strcpy(shm[idx]->path, kr.rep.path);
+    shm[idx]->has_reply = 1;
+    shm[idx]->payloadLen = kr.rep.payloadLen;
+    shm[idx]->strlenPath = kr.rep.pathLen;
 
     shm[idx]->has_reply = 1;
 
@@ -257,13 +265,16 @@ void closeShms(int num_proc, shm_msg* shm[])
 void handlePauseAndResume(int pause_flag,
                           Process *processes,
                           int num_proc,
-                          pid_t intercontroller, kernel_reply* fileQueue, int nFile, kernel_reply* dirQueue, int nDir)
+                          kernel_reply* fileQueue, int nFile, kernel_reply* dirQueue, int nDir,
+                          pid_t intercontroller,
+                          char written_files[NUM_PROC][MAX_WRITTEN_FILES][MAX_PATH_LEN],
+                          int written_files_count[NUM_PROC])
 {
     if (pause_flag)
     {
         printProcessStates(processes, num_proc);
         printResponseQueues(fileQueue, nFile, dirQueue, nDir);
-
+        print_written_files(written_files, written_files_count);
         for (int i = 0; i < num_proc; i++)
         {
             kill(processes[i].pid, SIGSTOP);
@@ -301,4 +312,34 @@ void checkTerminatedProcesses(Process *processes, int num_proc)
             }
         }
     }
+}
+
+void print_written_files(
+        char written_files[NUM_PROC][MAX_WRITTEN_FILES][MAX_PATH_LEN],
+        int written_files_count[NUM_PROC]
+    )
+{
+    printf("==== Arquivos Registrados ====\n");
+
+    for (int proc = 0; proc < NUM_PROC; proc++)
+    {
+        int count = written_files_count[proc];
+
+        printf("Processo %d:\n", proc + 1);
+
+        if (count == 0)
+        {
+            printf("  (nenhum arquivo escrito)\n");
+            continue;
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            printf("  [%d] %s\n", i, written_files[proc][i]);
+        }
+
+        printf("\n");
+    }
+
+    printf("===============================\n");
 }

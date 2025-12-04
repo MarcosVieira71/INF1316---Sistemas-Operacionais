@@ -39,3 +39,7 @@ add_executable(server
     src/sfss-server/server_functions.c
     ${SRC_COMMON}
 )
+target_compile_options(server PRIVATE
+    -Wno-format-truncation
+    -Wno-format-overflow
+)

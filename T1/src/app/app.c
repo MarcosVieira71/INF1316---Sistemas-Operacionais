@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
     }
 
     int owner = atoi(argv[1]);
-    printf("o que tá indo aqui ? %d\n", owner);
     int PC = 0;
     int pid = getpid();
 
@@ -46,11 +45,11 @@ int main(int argc, char *argv[]) {
 
         int r = rand() % 100;
 
+        handle_reply(shm, owner);
+
         if (r < 10) {
             prepare_syscall(shm, owner, offsets);
         }
-
-        handle_reply(shm, owner);
 
         printf("[App %d] executando... PC=%d\n", owner, PC);
         usleep(500000);

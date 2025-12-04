@@ -71,7 +71,6 @@ void prepare_syscall(shm_msg *shm, int owner, int offsets[]) {
 
     int type = rand() % 5;   // 0=read,1=write,2=add,3=rem,4=listdir
     int d = rand() % 3;
-    int f = rand() % 5;
 
     shm->offset = offsets[rand() % 5];
 
@@ -137,13 +136,25 @@ void handle_reply(shm_msg *shm, int owner) {
         return;
     }
 
-    if (strcmp(shm->op, "RD") == 0) {
+    if(shm->offset < 0){
+        if(strcmp(shm->op, "RD") == 0){
+            printf("   READ ERRO: Não conseguiu abrir arquivo. Offset negativo retornado\n");    
+        }
+        else if(strcmp(shm->op, "WR") == 0){
+            printf("   WRITE ERRO: Escrita não concluida/Remoção não foi possível. Offset negativo retornado\n");    
+        }
+        else if(shm->offset == -3){
+            printf("   WRITE ERRO: Numero de caracteres escritos diferentes do payload. Offset negativo retornado\n");
+        }
+    }
+
+    if (strcmp(shm->op, "RD") == 0 && shm->offset >= 0) {
         printf("   READ OK: payload recebido = \"");
         for (int i = 0; i < 16; i++)
             putchar(shm->payload[i]);
         printf("\"\n");
 
-    } else if (strcmp(shm->op, "WR") == 0) {
+    } else if (strcmp(shm->op, "WR") == 0 && shm->offset >= 0) {
         printf("   WRITE OK: 16 bytes foram escritos.\n");
 
     } else if (strcmp(shm->op, "DC") == 0) {

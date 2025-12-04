@@ -18,6 +18,7 @@ typedef struct {
 
     int payloadLen;
     char payload[16];
+    unsigned char isDeleting;
 
     struct {
         int nrnames;                          

@@ -70,7 +70,7 @@ int sendUdpRequest(int sockfd, struct sockaddr_in* srvAddr, const udp_msg* req)
     return 0;
 }
 
-kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
+kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[], char written_files[NUM_PROC][MAX_WRITTEN_FILES][MAX_PATH_LEN], int written_files_count[NUM_PROC])
 {
     udp_msg response;
     struct sockaddr_in src;
@@ -105,6 +105,40 @@ kernel_reply recvUdpReply(int sockfd, shm_msg* shm[], Process processes[])
 
     reply.rep = response;
     strcpy(reply.op, response.op);
+    if(strcmp(reply.op, "WR") == 0)
+    {
+        if(!response.isDeleting && response.offset >= 0)
+        {
+            int pos = written_files_count[idx];  // última posição usada
+    
+            if (pos < MAX_WRITTEN_FILES)
+            {
+                strncpy(written_files[idx][pos], response.path, MAX_PATH_LEN - 1);
+    
+                written_files_count[idx]++;   // atualiza contador
+            }
+        }
+        else if(response.isDeleting)
+        {
+            int count = written_files_count[idx];
+            for (int i = 0; i < count; i++)
+            {
+                if (strncmp(written_files[idx][i], response.path, MAX_PATH_LEN) == 0)
+                {
+                    for (int j = i; j < count - 1; j++)
+                    {
+                        strncpy(written_files[idx][j],
+                                written_files[idx][j + 1],
+                                MAX_PATH_LEN);
+                    }
+
+                    written_files_count[idx]--;
+
+                    break; 
+                }
+            }
+        }
+    }
 
     return reply;
 }

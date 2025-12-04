@@ -86,13 +86,18 @@ void handleWrite(const udp_msg* req, udp_msg* rep)
 {
     char fullpath[256];
     sprintf(fullpath, "%s%s", ROOT_DIR, req->path);
+    rep->isDeleting = 0;
 
     if (req->payloadLen == 0 && req->offset == 0)
     {
         if (unlink(fullpath) == 0)
+        {
             rep->offset = 0;
+            rep->isDeleting = 1;
+        }
         else
             rep->offset = -1; 
+        
         return;
     }
 
@@ -130,6 +135,7 @@ void handleWrite(const udp_msg* req, udp_msg* rep)
     else
         rep->offset = req->offset;
 
+    strcpy(rep->path,fullpath);
     fclose(f);
 
 }

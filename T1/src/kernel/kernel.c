@@ -21,7 +21,6 @@
 #include <sys/socket.h>
 
 
-#define NUM_PROC 5
 
 sig_atomic_t pause_flag = 0;
 
@@ -39,6 +38,10 @@ void sigtstpHandler(int sig)
 
 int main()
 {
+
+    char written_files[NUM_PROC][MAX_WRITTEN_FILES][MAX_PATH_LEN];
+    int written_files_count[NUM_PROC];  // contador por processo
+
     Process processes[NUM_PROC];
     pid_t intercontroller;
 
@@ -161,7 +164,7 @@ int main()
                         dirQueue, &nDir);
         }
 
-        kernel_reply reply = recvUdpReply(udpSock, shm, processes);
+        kernel_reply reply = recvUdpReply(udpSock, shm, processes, written_files, written_files_count);
         print_kernel_response(&reply);
 
         if(reply.valid)
@@ -178,7 +181,7 @@ int main()
 
         handleProcessRequests(processes, NUM_PROC, shm, udpSock, &serverAddr);
 
-        handlePauseAndResume(pause_flag, processes, NUM_PROC, intercontroller, fileQueue, nFile, dirQueue, nDir);
+        handlePauseAndResume(pause_flag, processes, NUM_PROC, fileQueue, nFile, dirQueue, nDir, intercontroller, written_files, written_files_count);
 
         checkTerminatedProcesses(processes, NUM_PROC);
 
